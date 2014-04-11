@@ -147,7 +147,7 @@ Query.prototype._binary_query = function(query) {
         return query;
     }
 
-    if (!('either' in query)) {
+    if (!query.hasOwnProperty('either')) {
         return query;
     }
 
@@ -195,10 +195,10 @@ Query.prototype._extract_products = function() {
             continue;
         }
 
-        if ('either' in item) {
+        if (item.hasOwnProperty('left') && item.hasOwnProperty('right')) {
             s.push(item.left);
             s.push(item.right);
-        } else if ('field' in item) {
+        } else if (item.hasOwnProperty('field') && item.hasOwnProperty('value')) {
             if (item.field == 'product') {
                 this.products.push(item.value);
             } else if (item.field == 'product-id') {
