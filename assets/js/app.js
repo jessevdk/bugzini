@@ -195,7 +195,13 @@ App.prototype._do_query_node = function(node, cb) {
 
             if (product) {
                 this.db.bugs().index('product').only(product.name).all((function (bugs) {
-                    cb(bugs);
+                    var ret = {};
+
+                    bugs.each(function(b) {
+                        ret[b.id] = b;
+                    });
+
+                    cb(ret);
                 }).bind(this));
             } else {
                 cb({});
