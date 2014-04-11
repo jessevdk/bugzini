@@ -168,7 +168,7 @@ Query.prototype._binary_query = function(query) {
             node = {type: 'all', left: node, right: this._binary_query(query.all[0])};
         }
 
-        for (var i = 1; i < query.either.length; i++) {
+        for (var i = 1; i < query.all.length; i++) {
             node = {type: 'either', left: node, right: this._binary_query(query.all[i])};
         }
     }
