@@ -41,13 +41,13 @@ $.prototype.queryAll = function(selector) {
 
 var $$ = new $(document);
 
-Object.prototype.each = function (cb) {
+function _do_each(cb) {
     for (var i = 0; i < this.length; i++) {
         cb(this[i]);
     }
 }
 
-Object.prototype.map = function(cb) {
+function _do_map(cb) {
     var ret = [];
 
     for (var i = 0; i < this.length; i++) {
@@ -57,7 +57,7 @@ Object.prototype.map = function(cb) {
     return ret;
 }
 
-Object.prototype.filter = function(cb) {
+function _do_filter(cb) {
     var ret = [];
 
     for (var i = 0; i < this.length; i++) {
@@ -69,9 +69,11 @@ Object.prototype.filter = function(cb) {
     return ret;
 }
 
-Object.prototype.$ = function() {
-    return new $(this);
-}
+Array.prototype.each = _do_each;
+Array.prototype.map = _do_map;
+Array.prototype.filter = _do_filter;
+
+NodeList.prototype.each = _do_each;
 
 document.addEventListener('DOMContentLoaded', function() {
     document.removeEventListener('DOMContentLoaded', arguments.callee, false);
