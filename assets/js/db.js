@@ -153,6 +153,12 @@ DB.prototype.filters = function() {
     return ret;
 }
 
+DB.prototype.bugs = function() {
+    var ret = new this.Store(this, 'bugs');
+
+    return ret;
+}
+
 DB.prototype.open = function () {
     var req = indexedDB.open('bugzini', 1);
 
