@@ -261,7 +261,7 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
             nensure--;
 
             if (nensure == 0) {
-                this._update_bugs_with_query(q);
+                this._update_bugs_list_with_query(q);
             }
         }).bind(this));
     }).bind(this));
