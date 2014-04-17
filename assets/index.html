@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bugzini</title>
+    <script type="text/javascript" src="assets/js/db.js"></script>
+    <script type="text/javascript" src="assets/js/spinner.js"></script>
+    <script type="text/javascript" src="assets/js/search.js"></script>
+    <script type="text/javascript" src="assets/js/app.js"></script>
+    <script type="text/javascript" src="assets/js/bugzini.js"></script>
+    <script type="text/javascript" src="assets/js/tweenjs-0.5.1.min.js"></script>
+
+    <link rel="stylesheet" href="assets/css/bugzini.css" type="text/css" media="screen" />
+  </head>
+  <body>
+    <div id="main">
+      <div id="sidebar">
+        <div id="sidebar_items" class="hide-scrollbar">
+          <ul>
+            <li id="all-starred-filter" class="item all selected"><span class="label">All Starred</span></li>
+          </ul>
+          <ul id="filters">
+          </ul>
+        </div>
+        <div class="search" id="search-filters">
+          <div class="params-icon icon"></div>
+          <input type="text" accesskey="s" title="Search (Alt + S)"/>
+          <div class="close-icon icon" title="Cancel search"></div>
+        </div>
+      </div>
+      <div id="content">
+        <div class="search" id="search-bugs">
+          <div class="params-icon icon"></div>
+          <input type="text" accesskey="b" title="Search (Alt + B)"/>
+          <div class="close-icon icon" title="Cancel search"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!-- vi:ts=2:et -->
