@@ -17,6 +17,7 @@ LOCAL_DEPS_IN_DIR = $(addprefix $(DEPS_DIR)/src/,$(LOCAL_DEPS))
 SOURCES = $(shell go list -f '{{join .GoFiles " "}}') assets.go
 
 bugzini: $(SOURCES) $(DEPS_DIR)/.stamp
+	@echo  "[build] $@"; \
 	GOPATH=$(DEPS_DIR) go build
 
 $(DEPS_DIR)/.stamp: $(DEPS_IN_DIR) $(LOCAL_DEPS_IN_DIR)
@@ -24,16 +25,18 @@ $(DEPS_DIR)/.stamp: $(DEPS_IN_DIR) $(LOCAL_DEPS_IN_DIR)
 
 $(DEPS_IN_DIR):
 	@dep=$(subst $(DEPS_DIR)/src/,,$@); \
-	echo "[DEP] $$dep"; GOPATH=$(DEPS_DIR) go get $$dep
+	echo "[DEP] $$dep"; GOPATH=$(DEPS_DIR) go get -d $$dep
 
 $(LOCAL_DEPS_IN_DIR):
 	@dep=$(subst $(DEPS_DIR)/src/,,$@); \
 	echo "[DEP] $$dep"; rm -f "$@"; ln -s "../../$(notdir $@)" "$@"
 
 $(DEPS_DIR)/bin/go-assets-builder:
-	GOPATH=$(DEPS_DIR) go install github.com/jessevdk/go-assets-builder
+	@echo "[GEN] go-assets-builder"; \
+	GOPATH=$(DEPS_DIR) go get github.com/jessevdk/go-assets-builder
 
 assets.go: $(DEPS_DIR)/bin/go-assets-builder $(ASSETS)
+	@echo "[GEN] $@"; \
 	$(DEPS_DIR)/bin/go-assets-builder -o $@ $(ASSETS)
 
 .PHONY:
