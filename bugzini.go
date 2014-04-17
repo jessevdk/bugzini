@@ -47,6 +47,17 @@ func main() {
 		Assets.LocalPath = "."
 	}
 
+	var bzaddr string
+
+	if options.Bugzilla.Secure {
+		bzaddr = "https://"
+	} else {
+		bzaddr = "http://"
+	}
+
+	bzaddr += options.Bugzilla.Host
+
+	router.Handle("/favicon.ico", http.RedirectHandler(bzaddr + "/favicon.ico", http.StatusTemporaryRedirect))
 	router.PathPrefix("/assets/").Handler(http.FileServer(Assets))
 	router.PathPrefix("/").HandlerFunc(SiteHandler)
 
