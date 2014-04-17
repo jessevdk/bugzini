@@ -15,6 +15,7 @@ var router = mux.NewRouter()
 var options struct {
 	Debug bool `short:"d" long:"debug" description:"Enable debug mode"`
 	Launch bool `short:"l" long:"launch" description:"Launch browser at location"`
+	Port int `short:"p" long:"port" description:"Launch local webserver at specified port"`
 
 	Bugzilla struct {
 		Host   string `long:"bz-host" description:"Bugzilla host (i.e. bugzilla.gnome.org)" default:"bugzilla.gnome.org"`
@@ -49,7 +50,7 @@ func main() {
 	router.PathPrefix("/assets/").Handler(http.FileServer(Assets))
 	router.PathPrefix("/").HandlerFunc(SiteHandler)
 
-	l, err := net.Listen("tcp", "localhost:8080")
+	l, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", options.Port))
 
 	if err != nil {
 		panic(err)
