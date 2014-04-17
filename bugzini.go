@@ -14,6 +14,7 @@ var router = mux.NewRouter()
 
 var options struct {
 	Debug bool `short:"d" long:"debug" description:"Enable debug mode"`
+	Launch bool `short:"l" long:"launch" description:"Launch browser at location"`
 
 	Bugzilla struct {
 		Host   string `long:"bz-host" description:"Bugzilla host (i.e. bugzilla.gnome.org)" default:"bugzilla.gnome.org"`
@@ -57,5 +58,10 @@ func main() {
 	port := l.Addr().(*net.TCPAddr).Port
 
 	fmt.Printf("Listening on http://localhost:%v\n", port)
+
+	if options.Launch {
+		launchBrowser(port)
+	}
+
 	http.Serve(l, router)
 }
