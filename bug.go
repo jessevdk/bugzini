@@ -23,7 +23,7 @@ func BugHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bug, err := client.Bugs().Get(int(id))
+	bug, err := client.Bugs().Get(client, int(id))
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

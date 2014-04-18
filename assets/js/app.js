@@ -15,6 +15,7 @@ App.prototype.init = function() {
     this._filters = [];
     this._search_filter = '';
     this._filter_map = {};
+    this._bugs = [];
 
     this.searches['search-filters'].on_update = this.on_search_filters.bind(this);
 
@@ -63,130 +64,171 @@ App.prototype.on_filters_updated = function() {
     }).bind(this));
 }
 
-App.prototype._tokenize_query = function(query) {
-    var tokens = [];
-    var i = 0;
+App.prototype._required_products_from_query = function(query) {
+    var products = [];
 
-    var schar = '!()" '
+    // Query for bugs of new products if necessary
+    query.products.each(function (p) {
+        var product = this.db.product_name_to_product[p];
 
-    while (i < query.length) {
-        switch (query[i]) {
-        case '!':
-            tokens.push({type: '!'});
-            break;
-        case '(':
-            tokens.push({type: '('});
-            break;
-        case ')':
-            tokens.push({type: ')'});
-            break;
-        case '"':
-            i++;
-            var s = i;
-
-            while (i < query.length && query[i] != '"') {
-                i++;
-            }
-
-            tokens.push({type: 's', value: query.slice(s, i)});
-            break;
-        case ' ':
-            break;
-        default:
-            var s = i;
-
-            while (i < query.length && schar.indexOf(query[i]) == -1) {
-                i++;
-            }
-
-            tokens.push({type: 's', value: query.slice(s, i)});
-            i--;
-            break;
+        if (product) {
+            products.push(product);
         }
+    });
 
-        i++;
-    }
+    query.product_ids.each((function (p) {
+        var product = this.db.product_id_to_product[p];
 
-    return tokens;
+        if (product) {
+            products.push(product);
+        }
+    }).bind(this));
+
+    return products;
 }
 
-App.prototype._parse_tokens = function(tokens) {
-    var root = {
-        either: [],
-        all: []
-    };
+App.prototype._render_bugs_list = function() {
 
-    var stack = [root];
-    var i = 0;
+}
 
-    var ungroup = function() {
-        var p = stack.shift();
+App.prototype._bugs_union = function(a, b) {
+    var isa = (typeof a === 'string' || 'field' in a);
+    var isb = (typeof b === 'string' || 'field' in b);
 
-        if (p.all.length == 0) {
-            stack[0].either = stack[0].either.concat(p.either);
+    if (isa && isb) {
+        // Keep for later
+        return {type: 'union', left: a, right: b};
+    }
+
+    if (!isa && !isb) {
+        // Simple union of both
+        var ret = {};
+
+        for (var k in a) {
+            ret[k] = a[k];
+        }
+
+        for (var k in b) {
+            if (!(k in ret)) {
+                ret[k] = b[k];
+            }
+        }
+
+        return ret;
+    } else {
+        if (isa) {
+            return b;
         } else {
-            stack[0].either.push(p);
+            return a;
+        }
+    }
+}
+
+App.prototype._bugs_filter = function(a, b) {
+    var ret = {};
+    var ff;
+
+    if (typeof b === 'string') {
+        ff = function(bug) {
+            return bug.summary.indexOf(b) != -1;
+        }
+    } else {
+        ff = function(bug) {
+            // TODO
+            return false;
         }
     }
 
-    var parse = function() {
-        var tok = tokens[i];
+    for (var k in a) {
+        var bug = a[k];
 
-        switch (tok.type) {
-        case '(':
-            i++;
-            stack.unshift({either: [], all: []});
+        if (ff(bug)) {
+            ret[k] = bug;
+        }
+    }
 
-            var l = stack.length;
+    return ret;
+}
 
-            while (i < tokens.length && stack.length >= l) {
-                parse();
+App.prototype._bugs_intersect = function(a, b) {
+    var isa = (typeof a === 'string' || 'field' in a);
+    var isb = (typeof b === 'string' || 'field' in b);
+
+    if (isa && isb) {
+        // Keep for later
+        return {type: 'intersect', left: a, right: b};
+    }
+
+    if (!isa && !isb) {
+        // Simple intersection of both
+        var ret = {};
+
+        for (var k in a) {
+            if (k in b) {
+                ret[k] = a[k]
+            }
+        }
+
+        return ret;
+    } else if (isa) {
+        // filter b by a
+        return this._bugs_filter(b, a);
+    } else {
+        // filter a by b
+        return this._bugs_filter(a, b);
+    }
+}
+
+App.prototype._do_query_node = function(node, cb) {
+    if (typeof node === 'string') {
+        // Simply do a filter
+        cb(node);
+    } else if ('field' in node) {
+        if (node.field == 'product' || node.field == 'product-id') {
+            var product;
+
+            if (node.field == 'product') {
+                product = this.db.product_name_to_product[node.value];
+            } else {
+                product = this.db.product_id_to_product[node.value];
             }
 
-            return;
-        case ')':
-            ungroup();
-            break;
-        case '!':
-            i++;
-
-            var neg = {either: [], all: []};
-
-            stack.unshift(neg);
-            parse();
-            stack.shift();
-
-            stack[0].all.push(neg);
-            return;
-        case 's':
-            stack[0].either.push(tok.value)
-            break;
+            if (product) {
+                this.db.bugs().index('product').only(product.name).all((function (bugs) {
+                    cb(bugs);
+                }).bind(this));
+            } else {
+                cb({});
+            }
+        } else {
+            cb(node);
         }
-
-        i++;
+    } else {
+        if (node.left && node.right) {
+            this._do_query_node(node.left, (function(retleft) {
+                this._do_query_node(node.right, (function(retright) {
+                    if (node.type == 'either') {
+                        cb(this._bugs_union(retleft, retright));
+                    } else {
+                        cb(this._bugs_intersect(retleft, retright));
+                    }
+                }).bind(this));
+            }).bind(this));
+        } else if (node.left) {
+            this._do_query_node(node.left, cb);
+        } else if (node.right) {
+            this._do_query_node(node.right, cb);
+        } else {
+            cb({});
+        }
     }
-
-    while (i < tokens.length) {
-        parse();
-    }
-
-    while (stack.length > 1) {
-        ungroup();
-    }
-
-    return root;
 }
 
-App.prototype._flat_queries = function(query) {
-    
-}
-
-App.prototype._parse_query = function(query) {
-    var tokens = this._tokenize_query(query);
-    var q = this._parse_tokens(tokens);
-
-    
-    console.log(JSON.stringify(q));
+App.prototype._update_bugs_list_with_query = function(query) {
+    // Perform actual query against database
+    this._do_query_node(query.tree, (function(ret) {
+        console.log(ret);
+    }).bind(this));
 }
 
 App.prototype._update_bugs_list_with_filters = function(filters) {
@@ -197,8 +239,26 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
         q += ' (' + s + ')';
     }
 
-    this._parse_query(q);
-    console.log(q);
+    var q = new Query(q);
+    var products = this._required_products_from_query(q);
+
+    if (products.length == 0) {
+        this._bugs = [];
+        this._render_bugs_list();
+        return;
+    }
+
+    var nensure = products.length;
+
+    products.each((function(product) {
+        this.db.ensure_product(product.id, (function() {
+            nensure--;
+
+            if (nensure == 0) {
+                this._update_bugs_with_query(q);
+            }
+        }).bind(this));
+    }).bind(this));
 }
 
 App.prototype._update_bugs_list = function() {

@@ -7,6 +7,10 @@ var DB = function() {
     this.db = null;
     this.loaded = null;
 
+    this.products = [];
+    this.product_id_to_product = {};
+    this.product_name_to_product = {};
+
     return this;
 }
 
@@ -59,6 +63,23 @@ DB.prototype.Store.prototype.put = function(item, cb) {
     }
 
     store.put(item);
+}
+
+DB.prototype.Store.prototype.find = function(key, cb) {
+    var tr = this._db.db.transaction(this._name);
+    var store = tr.objectStore(this._name);
+
+    var req = store.openCursor(IDBKeyRange.only(key));
+
+    req.onsuccess = function(e) {
+        var cursor = e.target.result;
+
+        if (cursor) {
+            cb(cursor.value);
+        } else {
+            cb(null);
+        }
+    }
 }
 
 DB.prototype.Store.prototype.all = function(cb) {
@@ -171,6 +192,12 @@ DB.prototype.upgrade_v1 = function() {
     filters.createIndex('is_product', 'is_product', { unique: false });
     filters.createIndex('name', 'name', { unique: false });
 
+    this.db.createObjectStore('products', { keyPath: 'id' });
+
+    var bugs = this.db.createObjectStore('bugs', { keyPath: 'id' });
+    bugs.createIndex('starred', 'starred', { unique: false });
+    bugs.createIndex('product', 'product', { unique: false });
+
     this._needs_init_filters = true;
 }
 
@@ -178,7 +205,17 @@ DB.prototype.init_filters = function() {
     if (this._needs_init_filters) {
         this.init_filters_load();
     } else {
-        this.on_filters_updated();
+        this.filters().all((function(filters) {
+            filters.each((function (filter) {
+                if (filter.is_product) {
+                    this.products.push(filter);
+                    this.product_id_to_product[filter.id] = filter;
+                    this.product_name_to_product[filter.name.toLowerCase()] = filter;
+                }
+            }).bind(this));
+
+            this.on_filters_updated();
+        }).bind(this));
     }
 }
 
@@ -189,11 +226,18 @@ DB.prototype.init_filters_load = function() {
             var tr = this.db.transaction('filters', 'readwrite');
             var store = tr.objectStore('filters');
 
+            this.products = ret;
+            this.product_id_to_product = {};
+            this.product_name_to_product = {};
+
             tr.oncomplete = (function(e) {
                 this.on_filters_updated();
             }).bind(this);
 
-            ret.each(function (product) {
+            ret.each((function (product) {
+                this.product_id_to_product[product.id] = product;
+                this.product_name_to_product[product.name.toLowerCase()] = product;
+
                 var filter = {
                     description: product.description,
                     name: product.name,
@@ -204,13 +248,44 @@ DB.prototype.init_filters_load = function() {
                 }
 
                 store.put(filter);
-            });
+            }).bind(this));
         }).bind(this),
 
         error: (function(req) {
             console.log([req.status, req.statusText]);
         }).bind(this)
     });
+}
+
+DB.prototype.ensure_product = function(id, cb) {
+    var store = new this.Store(this, 'products');
+
+    store.find(id, (function(record) {
+        if (record) {
+            cb();
+        } else {
+            Service.get('/product/' + id + '/bugs', {
+                success: (function(req, ret) {
+                    var tr = this.db.transaction('products', 'readwrite');
+                    var store = tr.objectStore('products');
+
+                    store.put({id: id, last_update: new Date()});
+
+                    // Update bugs
+                    var tr = this.db.transaction('bugs', 'readwrite');
+                    var store = tr.objectStore('bugs');
+
+                    tr.oncomplete = function() {
+                        cb();
+                    }
+
+                    ret.each((function (bug) {
+                        store.put(bug);
+                    }).bind(this));
+                }).bind(this)
+            });
+        }
+    }).bind(this));
 }
 
 /* vi:ts=4:et */

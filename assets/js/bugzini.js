@@ -76,7 +76,7 @@ Object.prototype.$ = function() {
 document.addEventListener('DOMContentLoaded', function() {
     document.removeEventListener('DOMContentLoaded', arguments.callee, false);
 
-    var app = new App();
+    app = new App();
     app.run();
 }, false);
 

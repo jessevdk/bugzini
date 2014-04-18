@@ -29,7 +29,11 @@ func (c *Conn) Products() Products {
 	}
 }
 
-func (p Products) GetAll(ids []int) ([]Product, error) {
+func (p Products) GetAll(conn *Conn, ids []int) ([]Product, error) {
+	if conn == nil {
+		conn = p.conn
+	}
+
 	args := struct {
 		Ids []int `xmlrpc:"ids" json:"ids"`
 	}{
@@ -40,15 +44,15 @@ func (p Products) GetAll(ids []int) ([]Product, error) {
 		Products []Product `xmlrpc:"products" json:"products"`
 	}
 
-	if err := p.conn.Call("Product.get", args, &ret); err != nil {
+	if err := conn.Call("Product.get", args, &ret); err != nil {
 		return nil, err
 	}
 
 	return ret.Products, nil
 }
 
-func (p Products) Get(id int) (Product, error) {
-	ret, err := p.GetAll([]int{id})
+func (p Products) Get(conn *Conn, id int) (Product, error) {
+	ret, err := p.GetAll(conn, []int{id})
 
 	if err != nil {
 		return Product{}, err
@@ -74,12 +78,16 @@ func (p *ProductList) Len() int {
 	return len(p.Ids)
 }
 
-func (p *ProductList) Get(i int) (Product, error) {
+func (p *ProductList) Get(conn *Conn, i int) (Product, error) {
+	if conn == nil {
+		conn = p.conn
+	}
+
 	if i >= len(p.Ids) {
 		return Product{}, errors.New("out of bounds")
 	}
 
-	N := 100
+	N := 300
 	n := len(p.products)
 
 	for i >= n {
@@ -100,7 +108,7 @@ func (p *ProductList) Get(i int) (Product, error) {
 			Ids: p.Ids[n : n+limit],
 		}
 
-		if err := p.conn.Call("Product.get", pids, &ret); err != nil {
+		if err := conn.Call("Product.get", pids, &ret); err != nil {
 			return Product{}, err
 		}
 
@@ -108,12 +116,16 @@ func (p *ProductList) Get(i int) (Product, error) {
 		n = len(p.products)
 	}
 
-	p.products[i].conn = p.conn
+	p.products[i].conn = conn
 	return p.products[i], nil
 }
 
-func (p *Product) Bugs() (*BugList, error) {
-	return p.conn.Bugs().SearchPage(map[string][]string{
+func (p *Product) Bugs(conn *Conn) (*BugList, error) {
+	if conn == nil {
+		conn = p.conn
+	}
+
+	return conn.Bugs().SearchPage(map[string][]string{
 		"product": []string{p.Name},
-	}, 100)
+	}, 300)
 }

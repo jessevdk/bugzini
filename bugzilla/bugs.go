@@ -66,7 +66,11 @@ func (c *Conn) Bugs() Bugs {
 	}
 }
 
-func (b Bugs) GetAll(ids []int) ([]Bug, error) {
+func (b Bugs) GetAll(conn *Conn, ids []int) ([]Bug, error) {
+	if conn == nil {
+		conn = b.conn
+	}
+
 	args := struct {
 		Ids []int `xmlrpc:"ids" json:"ids"`
 	}{
@@ -77,19 +81,19 @@ func (b Bugs) GetAll(ids []int) ([]Bug, error) {
 		Bugs []Bug `xmlrpc:"bugs" json:"bugs"`
 	}
 
-	if err := b.conn.Call("Bug.get", args, &ret); err != nil {
+	if err := conn.Call("Bug.get", args, &ret); err != nil {
 		return nil, err
 	}
 
 	for i := 0; i < len(ret.Bugs); i++ {
-		ret.Bugs[i].conn = b.conn
+		ret.Bugs[i].conn = conn
 	}
 
 	return ret.Bugs, nil
 }
 
-func (b Bugs) Get(id int) (Bug, error) {
-	ret, err := b.GetAll([]int{id})
+func (b Bugs) Get(conn *Conn, id int) (Bug, error) {
+	ret, err := b.GetAll(conn, []int{id})
 
 	if err != nil {
 		return Bug{}, err
@@ -110,7 +114,11 @@ func (p Bugs) Search(query interface{}) (*BugList, error) {
 	return p.SearchPage(query, 0)
 }
 
-func (b *BugList) Get(i int) (*Bug, error) {
+func (b *BugList) Get(conn *Conn, i int) (*Bug, error) {
+	if conn == nil {
+		conn = b.conn
+	}
+
 	n := len(b.bugs)
 
 	for i >= n && !b.finished {
@@ -132,7 +140,7 @@ func (b *BugList) Get(i int) (*Bug, error) {
 
 		limit := b.pageSize
 
-		if err := b.conn.Call("Bug.search", b.query, &ret); err != nil {
+		if err := conn.Call("Bug.search", b.query, &ret); err != nil {
 			return nil, err
 		}
 
@@ -146,11 +154,15 @@ func (b *BugList) Get(i int) (*Bug, error) {
 		return nil, errors.New("out of bounds")
 	}
 
-	b.bugs[i].conn = b.conn
+	b.bugs[i].conn = conn
 	return &b.bugs[i], nil
 }
 
-func (b *Bug) Attachments() ([]Attachment, error) {
+func (b *Bug) Attachments(conn *Conn) ([]Attachment, error) {
+	if conn == nil {
+		conn = b.conn
+	}
+
 	if b.attachments != nil {
 		return b.attachments, nil
 	}
@@ -166,7 +178,7 @@ func (b *Bug) Attachments() ([]Attachment, error) {
 		Attachments map[int]Attachment   `xmlrpc:"attachments" json:"attachments"`
 	}
 
-	if err := b.conn.Call("Bug.attachments", args, &ret); err != nil {
+	if err := conn.Call("Bug.attachments", args, &ret); err != nil {
 		return nil, err
 	}
 
