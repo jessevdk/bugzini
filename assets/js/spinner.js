@@ -18,6 +18,9 @@ Spinner.prototype.cancel = function() {
 
         this._animate_id = 0;
         this._animate_start = null;
+
+        this.elem.style.backgroundPositionX = '';
+        this.elem.style.backgroundPositionY = '';
     }
 }
 
