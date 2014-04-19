@@ -19,6 +19,7 @@ DB.prototype.Store = function(db, name) {
     this._name = name;
     this._index = null;
     this._range = null;
+    this._reverse = false;
 
     this.sort = null;
     this.read = null;
@@ -45,6 +46,7 @@ DB.prototype.Store.prototype._copy = function() {
 
     ret._index = this._index;
     ret._range = this._range;
+    ret._reverse = this._reverse;
 
     ret.sort = this.sort;
     ret.read = this.read;
@@ -82,19 +84,17 @@ DB.prototype.Store.prototype.find = function(key, cb) {
     }
 }
 
-DB.prototype.Store.prototype.all = function(cb) {
+DB.prototype.Store.prototype.reverse = function() {
+    var ret = this._copy();
+    ret._reverse = !this._reverse;
+    return ret;
+}
+
+DB.prototype.Store.prototype.cursor = function(cb, oncomplete) {
     var tr = this._db.db.transaction(this._name);
     var ret = [];
 
-    tr.oncomplete = (function() {
-        if (this.sort != null)
-        {
-            ret = ret.sort(this.sort);
-        }
-
-        cb(ret);
-    }).bind(this);
-
+    tr.oncomplete = oncomplete;
     var store = tr.objectStore(this._name);
 
     if (this._index) {
@@ -104,14 +104,37 @@ DB.prototype.Store.prototype.all = function(cb) {
     var req;
 
     if (this._range) {
-        req = store.openCursor(this._range);
+        if (this._reverse) {
+            req = store.openCursor(this._range, 'prev');
+        } else {
+            req = store.openCursor(this._range);
+        }
     } else {
-        req = store.openCursor();
+        if (this._reverse) {
+            req = store.openCursor(null, 'prev');
+        } else {
+            req = store.openCursor();
+        }
     }
 
-    req.onsuccess = (function(e) {
-        var cursor = e.target.result;
+    req.onsuccess = function(e) {
+        cb(e.target.result);
+    }
+}
 
+DB.prototype.Store.prototype.all = function(cb) {
+    var ret = [];
+
+    var oncomplete = (function() {
+        if (this.sort != null)
+        {
+            ret = ret.sort(this.sort);
+        }
+
+        cb(ret);
+    }).bind(this);
+
+    this.cursor((function(cursor) {
         if (!cursor) {
             return;
         }
@@ -125,7 +148,7 @@ DB.prototype.Store.prototype.all = function(cb) {
 
         ret.push(record);
         cursor.continue();
-    }).bind(this);
+    }).bind(this), oncomplete);
 }
 
 DB.prototype.filters = function() {
@@ -205,6 +228,8 @@ DB.prototype.upgrade_v1 = function() {
     bugs.createIndex('starred', 'starred', { unique: false });
     bugs.createIndex('product', 'product', { unique: false });
     bugs.createIndex('product_open', ['product', 'is_open'], { unique: false });
+    bugs.createIndex('last_change_time', 'last_change_time', { unique: false });
+    bugs.createIndex('product_last_change_time', ['product', 'last_change_time'], { unique: false });
 
     this._needs_init_filters = true;
 }
@@ -267,6 +292,29 @@ DB.prototype.init_filters_load = function() {
     });
 }
 
+DB.prototype._process_bugs = function(product, bugs, cb) {
+    var tr = this.db.transaction('products', 'readwrite');
+    var store = tr.objectStore('products');
+
+    store.put({id: product, last_update: new Date()});
+
+    // Update bugs
+    var tr = this.db.transaction('bugs', 'readwrite');
+    var store = tr.objectStore('bugs');
+
+    tr.oncomplete = function() {
+        cb();
+    }
+
+    bugs.each((function (bug) {
+        bug.is_open = bug.is_open ? 1 : 0;
+        bug.creation_time = Date.parse(bug.creation_time);
+        bug.last_change_time = Date.parse(bug.last_change_time);
+
+        store.put(bug);
+    }).bind(this));   
+}
+
 DB.prototype.ensure_product = function(id, cb) {
     var store = new this.Store(this, 'products');
 
@@ -276,29 +324,34 @@ DB.prototype.ensure_product = function(id, cb) {
         } else {
             Service.get('/product/' + id + '/bugs', {
                 success: (function(req, ret) {
-                    var tr = this.db.transaction('products', 'readwrite');
-                    var store = tr.objectStore('products');
-
-                    store.put({id: id, last_update: new Date()});
-
-                    // Update bugs
-                    var tr = this.db.transaction('bugs', 'readwrite');
-                    var store = tr.objectStore('bugs');
-
-                    tr.oncomplete = function() {
-                        cb();
-                    }
-
-                    ret.each((function (bug) {
-                        bug.is_open = bug.is_open ? 1 : 0;
-                        bug.creation_time = Date.parse(bug.creation_time);
-                        bug.last_change_time = Date.parse(bug.last_change_time);
-
-                        store.put(bug);
-                    }).bind(this));
+                    this._process_bugs(id, ret, cb);
                 }).bind(this)
             });
         }
+    }).bind(this));
+}
+
+DB.prototype.update_product = function(id, cb) {
+    var store = new this.Store(this, 'products');
+
+    store.find(id, (function(record) {
+        if (!record) {
+            cb();
+            return;
+        }
+
+        var name = record.name;
+        var store = this.bugs().index('product_last_change_time').reverse();
+
+        store.cursor((function(cursor) {
+            var bug = cursor.value;
+
+            Service.get('/product/' + id + '/bugs?after=' + bug.last_change_time / 1000, {
+                success: (function(req, ret) {
+                    this._process_bugs(id, ret, cb);
+                }).bind(this)
+            });
+        }).bind(this));
     }).bind(this));
 }
 

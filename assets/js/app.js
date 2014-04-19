@@ -16,6 +16,7 @@ App.prototype.init = function() {
     this._search_filter = '';
     this._filter_map = {};
     this._bugs = [];
+    this._refreshing = {};
 
     this.searches['search-filters'].on_update = this.on_search_filters.bind(this);
 
@@ -75,13 +76,13 @@ App.prototype._required_products_from_query = function(query) {
     var products = [];
 
     // Query for bugs of new products if necessary
-    query.products.each(function (p) {
+    query.products.each((function (p) {
         var product = this.db.product_name_to_product[p];
 
         if (product) {
             products.push(product);
         }
-    });
+    }).bind(this));
 
     query.product_ids.each((function (p) {
         var product = this.db.product_id_to_product[p];
@@ -423,6 +424,38 @@ App.prototype._on_filter_star_click = function(elem, star, filter) {
     }).bind(this));
 }
 
+App.prototype._on_filter_refresh_click = function(elem, star, filter) {
+    var refresh = elem.querySelector('.refresh');
+
+    refresh.classList.add('spinner');
+    refresh.classList.remove('loaded');
+    
+    var spinner = new Spinner(refresh);
+    spinner.start();
+
+    var isrefr = (filter.id in this._refreshing);
+
+    if (isrefr && this._refreshing[filter.id]) {
+        this._refreshing[filter.id].cancel();
+    }
+
+    this._refreshing[filter.id] = spinner;
+
+    if (isrefr) {
+        return;
+    }
+
+    this.db.update_product(filter.id, (function() {
+        this._refreshing[filter.id].cancel();
+        delete this._refreshing[filter.id];
+
+        refresh.classList.remove('spinner');
+        refresh.classList.add('loaded');
+
+        this._update_bugs_list();
+    }).bind(this));
+}
+
 App.prototype._update_filters = function() {
     var html = '';
     var had_starred = false;
@@ -459,14 +492,19 @@ App.prototype._update_filters = function() {
             licls += ' selected'
         }
 
-        html += '<li class="' + licls + '" data-id="' + filter.id + '"><div class="star ' + cls + '"></div><span class="label">' + filter.name + '</span></li>';
+        html += '<li class="' + licls + '" data-id="' + filter.id + '"><div class="star ' + cls + '"></div><span class="label">' + filter.name + '</span>';
+
+        if (filter.is_product) {
+            html += '<div class="refresh loaded"></div>';
+        }
+
+        html += '</li>'
     }).bind(this));
 
     this.filters.innerHTML = html;
 
     this.filters.childNodes.each((function (n) {
         if (n.classList.contains('item')) {
-            var star = n.childNodes[0];
             var did = n.attributes['data-id'].value;
 
             var filter = this._filter_map[did];
@@ -479,10 +517,41 @@ App.prototype._update_filters = function() {
                 this._on_filter_click.bind(this)(n, filter);
             }).bind(this));
 
+            var star = n.querySelector('.star');
+
+            star.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
             star.addEventListener('mousedown', (function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+
                 this._on_filter_star_click.bind(this)(n, star, filter);
             }).bind(this));
+
+            var refresh = n.querySelector('.refresh');
+
+            if (refresh) {
+                refresh.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                refresh.addEventListener('mousedown', (function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (!(filter.id in this._refreshing)) {
+                        this._on_filter_refresh_click.bind(this)(n, refresh, filter);
+                    }
+                }).bind(this));
+
+                if (filter.id in this._refreshing) {
+                    this._on_filter_refresh_click.bind(this)(n, refresh, filter);
+                }
+            }
         }
     }).bind(this));
 }

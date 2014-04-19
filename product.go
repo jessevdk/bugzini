@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type ProductCache struct {
@@ -76,13 +77,6 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	client, err := Bz()
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	idv, err := strconv.ParseInt(vars["id"], 10, 32)
 
 	if err != nil {
@@ -91,6 +85,13 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := int(idv)
+
+	client, err := Bz()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	product, ok := productCache.ProductMap[id]
 
@@ -106,12 +107,31 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 		productCache.Save()
 	}
 
-	if bugs, ok := productCache.Bugs[id]; ok {
-		JsonResponse(w, bugs)
-		return
+	after := r.FormValue("after")
+
+	// Only use cache if not asking for bugs after a certain date
+	if len(after) == 0 {
+		if bugs, ok := productCache.Bugs[id]; ok {
+			JsonResponse(w, bugs)
+			return
+		}
 	}
 
-	bugs, err := product.Bugs(client)
+	var bugs *bugzilla.BugList
+
+	if len(after) != 0 {
+		afsec, err := strconv.ParseInt(after, 10, 64)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		t := time.Unix(afsec, 0)
+		bugs, err = product.BugsAfter(client, t)
+	} else {
+		bugs, err = product.Bugs(client)
+	}
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

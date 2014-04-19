@@ -2,6 +2,7 @@ package bugzilla
 
 import (
 	"errors"
+	"time"
 )
 
 type Products struct {
@@ -127,6 +128,18 @@ func (p *Product) Bugs(conn *Conn) (*BugList, error) {
 
 	return conn.Bugs().SearchPage(map[string]interface{}{
 		"product": []string{p.Name},
+		"resolution": "",
+	}, 300)
+}
+
+func (p *Product) BugsAfter(conn *Conn, after time.Time) (*BugList, error) {
+	if conn == nil {
+		conn = p.conn
+	}
+
+	return conn.Bugs().SearchPage(map[string]interface{}{
+		"product": []string{p.Name},
+		"last_change_time": after,
 		"resolution": "",
 	}, 300)
 }

@@ -15,7 +15,8 @@
   width: 568px;
 }
 
-.star {
+.star,
+.refresh {
   width: 16px;
   height: 16px;
   display: inline-block;
