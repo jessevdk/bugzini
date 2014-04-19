@@ -18,6 +18,8 @@ var Search = function(elem) {
     this._close.addEventListener('click', this._on_close.bind(this));
 
     this._last_value = '';
+    this._on_update_timeout = 0;
+    this.update_delay = 0;
 
     this.on_update = function() {}
 }
@@ -42,18 +44,34 @@ Search.prototype._on_close = function() {
     this._cancel();
 }
 
+Search.prototype._emity_update = function(force) {
+    if (this._on_update_timeout != 0) {
+        clearTimeout(this._on_update_timeout);
+        this._on_update_timeout = 0;
+    }
+
+    if (force || this.update_delay == 0) {
+        this.on_update(this);
+    } else {
+        this._on_update_timeout = setTimeout((function() {
+            this._on_update_timeout = 0;
+            this.on_update(this);
+        }).bind(this), this.update_delay);
+    }
+}
+
 Search.prototype._on_change = function() {
     var val = this.value();
 
     if (val != this._last_value) {
         this._last_value = val;
-        this.on_update(this);
+        this._emity_update(false);
     }
 }
 
 Search.prototype._cancel = function() {
     this._input.value = '';
-    this.on_update(this);
+    this._emity_update(true);
 
     this._input.focus();
 }
