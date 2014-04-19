@@ -92,12 +92,13 @@ App.prototype._render_bugs_list = function() {
 }
 
 App.prototype._bugs_union = function(a, b) {
-    var isa = (typeof a === 'string' || 'field' in a);
-    var isb = (typeof b === 'string' || 'field' in b);
+    var isa = (typeof a === 'function');
+    var isb = (typeof b === 'function');
 
     if (isa && isb) {
-        // Keep for later
-        return {type: 'union', left: a, right: b};
+        return function(bug) {
+            return a(bug) || b(bug);
+        }
     }
 
     if (!isa && !isb) {
@@ -126,23 +127,11 @@ App.prototype._bugs_union = function(a, b) {
 
 App.prototype._bugs_filter = function(a, b) {
     var ret = {};
-    var ff;
-
-    if (typeof b === 'string') {
-        ff = function(bug) {
-            return bug.summary.indexOf(b) != -1;
-        }
-    } else {
-        ff = function(bug) {
-            // TODO
-            return false;
-        }
-    }
 
     for (var k in a) {
         var bug = a[k];
 
-        if (ff(bug)) {
+        if (b(bug)) {
             ret[k] = bug;
         }
     }
@@ -151,12 +140,13 @@ App.prototype._bugs_filter = function(a, b) {
 }
 
 App.prototype._bugs_intersect = function(a, b) {
-    var isa = (typeof a === 'string' || 'field' in a);
-    var isb = (typeof b === 'string' || 'field' in b);
+    var isa = (typeof a === 'function');
+    var isb = (typeof b === 'function');
 
     if (isa && isb) {
-        // Keep for later
-        return {type: 'intersect', left: a, right: b};
+        return function(bug) {
+            return a(bug) && b(bug);
+        }
     }
 
     if (!isa && !isb) {
@@ -182,7 +172,9 @@ App.prototype._bugs_intersect = function(a, b) {
 App.prototype._do_query_node = function(node, cb) {
     if (typeof node === 'string') {
         // Simply do a filter
-        cb(node);
+        cb(function(bug) {
+            return bug.summary.indexOf(node) != -1;
+        });
     } else if ('field' in node) {
         if (node.field == 'product' || node.field == 'product-id') {
             var product;
@@ -207,7 +199,9 @@ App.prototype._do_query_node = function(node, cb) {
                 cb({});
             }
         } else {
-            cb(node);
+            cb(function(bug) {
+                return bug[node.field].indexOf(node.value) != -1;
+            });
         }
     } else {
         if (node.left && node.right) {
@@ -233,7 +227,13 @@ App.prototype._do_query_node = function(node, cb) {
 App.prototype._update_bugs_list_with_query = function(query) {
     // Perform actual query against database
     this._do_query_node(query.tree, (function(ret) {
-        console.log(ret);
+        this._bugs = [];
+
+        for (k in ret) {
+            this._bugs.push(ret[k]);
+        }
+
+        this._render_bugs_list();
     }).bind(this));
 }
 
