@@ -19,6 +19,9 @@ App.prototype.init = function() {
 
     this.searches['search-filters'].on_update = this.on_search_filters.bind(this);
 
+    this.searches['search-bugs'].update_delay = 300;
+    this.searches['search-bugs'].on_update = this.on_search_bugs.bind(this);
+
     var items = $$.query('#sidebar_items')
 
     items.addEventListener('DOMSubtreeModified', function (e) {
@@ -49,6 +52,10 @@ App.prototype.init = function() {
 App.prototype.on_search_filters = function(search) {
     this._search_filter = search.value().toLowerCase();
     this._update_filters();
+}
+
+App.prototype.on_search_bugs = function(search) {
+    this._update_bugs_list();
 }
 
 App.prototype.on_filters_updated = function() {
