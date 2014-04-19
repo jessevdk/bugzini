@@ -204,6 +204,7 @@ DB.prototype.upgrade_v1 = function() {
     var bugs = this.db.createObjectStore('bugs', { keyPath: 'id' });
     bugs.createIndex('starred', 'starred', { unique: false });
     bugs.createIndex('product', 'product', { unique: false });
+    bugs.createIndex('product_open', ['product', 'is_open'], { unique: false });
 
     this._needs_init_filters = true;
 }
@@ -289,6 +290,10 @@ DB.prototype.ensure_product = function(id, cb) {
                     }
 
                     ret.each((function (bug) {
+                        bug.is_open = bug.is_open ? 1 : 0;
+                        bug.creation_time = Date.parse(bug.creation_time);
+                        bug.last_change_time = Date.parse(bug.last_change_time);
+
                         store.put(bug);
                     }).bind(this));
                 }).bind(this)

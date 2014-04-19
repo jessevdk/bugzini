@@ -94,8 +94,68 @@ App.prototype._required_products_from_query = function(query) {
     return products;
 }
 
-App.prototype._render_bugs_list = function() {
+App.prototype._date_for_display = function(date) {
+    var now = new Date();
 
+    var months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+    ];
+
+    var ret = months[date.getMonth()] + " " + (date.getDay() + 1);
+
+    if (now.getFullYear() != date.getFullYear()) {
+        ret += ", " + date.getFullYear();
+    }
+
+    return ret;
+}
+
+App.prototype._render_bugs_list = function() {
+    var rows = '';
+    var mt1 = false;
+
+    if (this._bugs.length > 0) {
+        var prod = this._bugs[0].product;
+
+        for (var i = 1; i < this._bugs.length; i++) {
+            if (prod != this._bugs[i].product) {
+                mt1 = true;
+                break;
+            }
+        }
+    }
+
+    for (var i = 0; i < this._bugs.length; i++) {
+        var bug = this._bugs[i];
+        var date = this._date_for_display(new Date(bug.creation_time));
+
+        rows += '\
+<tr class="' + bug.severity + '">\
+  <td><span class="severity">' + bug.severity.substring(0, 2) + '</span></td>\
+  <td>';
+
+        if (mt1) {
+            rows += '<span class="product">' + bug.product + '</span>'
+        }
+
+        rows += '<span class="summary">' + bug.summary + '</span></td>\
+  <td>' + date + '</td>\
+</tr>';
+
+    }
+
+    $$.query('#bugs_list tbody').innerHTML = rows;
 }
 
 App.prototype._bugs_union = function(a, b) {
@@ -193,7 +253,7 @@ App.prototype._do_query_node = function(node, cb) {
             }
 
             if (product) {
-                this.db.bugs().index('product').only(product.name).all((function (bugs) {
+                this.db.bugs().index('product_open').only([product.name, 1]).all((function (bugs) {
                     var ret = {};
 
                     bugs.each(function(b) {
@@ -239,6 +299,10 @@ App.prototype._update_bugs_list_with_query = function(query) {
         for (k in ret) {
             this._bugs.push(ret[k]);
         }
+
+        this._bugs = this._bugs.sort(function(a, b) {
+            return b.last_change_time - a.last_change_time;
+        });
 
         this._render_bugs_list();
     }).bind(this));
@@ -352,6 +416,10 @@ App.prototype._on_filter_star_click = function(elem, star, filter) {
         this._filters.splice(before.oindex, 0, filter);
 
         this._update_filters();
+
+        if (this._active_filter == null) {
+            this._update_bugs_list();
+        }
     }).bind(this));
 }
 

@@ -2,6 +2,7 @@
   margin-left: 280px;
   padding: 10px;
   padding-left: 20px;
+  padding-right: 20px;
 }
 
 #content .search {
@@ -29,6 +30,112 @@
 
 .star.starred {
   background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAfdEVYdFRpdGxlAEdub21lIFN5bWJvbGljIEljb24gVGhlbWWOpCmrAAABQ0lEQVQ4jZWSsUoDQRRFz9uNioWLhYUGq0gkiLCKIBINRvADbEIWRAsLP0FsLGzs/AcLlYhpTC9aWAZCIIWdwUZEC1MEQdd9FmrcTRgTbzcz99x53BlRVUxaOMHx+5FyjobJEzPSwKtNSQL6gEWTxzIduAUyIiwDabdA5t8BYrH3u2DX6GvvIH3OYFNZFaUUNbIyPMrNVRa/I2DmjEOUJYRxYAwQw4U+cI9Q14DLqsfBT4lxhHnTmCHFgARKQuAZvjuINdgUodhDwNfYQtG32WgFlLd5TwoeynEP/FFS8Go53qCtRNnHclM8AiMG+K6aZ0KhBUWecW6KoT9ggHj2Gju8EQn4UKa7jD/QeGLSGKBB5CVqAmuirAP1kGfWHGDhIDwAW9Vb3Eqei4rHadMhJbADvATghJmOn9hNAmIssReFYYBPUpxdtWGS6toAAAAASUVORK5CYII=');
+}
+
+#bugs_list {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 auto;
+  margin-top: 30px;
+  font-size: 0.9em;
+}
+
+#bugs_list th {
+  text-align: left;
+  border-bottom: 1px solid #aaa;
+}
+
+#bugs_list span.product {
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 0.7em;
+  font-family: menlo, monospace;
+  border-radius: 3px;
+  border: 1px solid #eee;
+  background-color: #f5f5f5;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+#bugs_list th,
+#bugs_list td {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+#bugs_list td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  vertical-align: top;
+}
+
+#bugs_list span.severity {
+  padding-left: 3px;
+  padding-right: 3px;
+  font-family: menlo, monospace;
+  font-size: 0.7em;
+  display: inline-block;
+  margin-bottom: 4px;
+  border-radius: 3px;
+}
+
+#bugs_list tr.critical {
+  color: #dc322f;
+}
+
+#bugs_list tr.normal span.severity {
+  background-color: #859900;
+  color: #fff;
+}
+
+#bugs_list tr.major span.severity,
+#bugs_list tr.critical span.severity {
+  background-color: #dc322f;
+  color: #fff;
+}
+
+#bugs_list tr.minor span.severity {
+}
+
+#bugs_list tr.enhancement span.severity {
+  background-color: #268BD2;
+  color: #fff;
+}
+
+#bugs_list tr.critical td {
+
+}
+
+#bugs_list tr:nth-child(even) td {
+  background-color: #f9f9f9;
+}
+
+#bugs_list th:nth-child(1),
+#bugs_list td:nth-child(1) {
+  padding-left: 0px;
+  padding-right: 6px;
+}
+
+#bugs_list th:nth-child(2),
+#bugs_list td:nth-child(2) {
+  padding-left: 0px;
+}
+
+#bugs_list th:last-child,
+#bugs_list td:last-child {
+  padding-right: 0px;
+}
+
+col.severity {
+  width: 16px;
+}
+
+col.date {
+  width: 8em;
+}
+
+col.id {
+  width: 4em;
 }
 
 /* vi:ts=2:et */
