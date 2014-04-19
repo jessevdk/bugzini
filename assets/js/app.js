@@ -338,8 +338,20 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
     var nensure = products.length;
 
     products.each((function(product) {
+        var elem = $$.query('#sidebar_items li[data-id="' + product.id + '"]');
+        var cb;
+
+        if (elem) {
+            var filter = this._filter_map[product.id];
+            cb = this._render_refresh(elem, filter);
+        }
+
         this.db.ensure_product(product.id, (function() {
             nensure--;
+
+            if (cb) {
+                cb();
+            }
 
             if (nensure == 0) {
                 this._update_bugs_list_with_query(q);
@@ -433,7 +445,7 @@ App.prototype._on_filter_star_click = function(elem, star, filter) {
     }).bind(this));
 }
 
-App.prototype._on_filter_refresh_click = function(elem, star, filter) {
+App.prototype._render_refresh = function(elem, filter) {
     var refresh = elem.querySelector('.refresh');
 
     refresh.classList.add('spinner');
@@ -450,16 +462,26 @@ App.prototype._on_filter_refresh_click = function(elem, star, filter) {
 
     this._refreshing[filter.id] = spinner;
 
-    if (isrefr) {
-        return;
-    }
-
-    this.db.update_product(filter.id, (function() {
+    return (function() {
         this._refreshing[filter.id].cancel();
         delete this._refreshing[filter.id];
 
         refresh.classList.remove('spinner');
         refresh.classList.add('loaded');
+    }).bind(this);
+}
+
+App.prototype._on_filter_refresh_click = function(elem, refresh, filter) {
+    var isrefr = (filter.id in this._refreshing);
+
+    var cb = this._render_refresh(elem, filter);
+
+    if (isrefr) {
+        return;
+    }
+
+    this.db.update_product(filter.id, (function() {
+        cb();
 
         this._update_bugs_list();
     }).bind(this));
