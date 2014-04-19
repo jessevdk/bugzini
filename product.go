@@ -14,11 +14,14 @@ type ProductCache struct {
 	Products []bugzilla.Product `json:"products"`
 	ProductMap map[int]bugzilla.Product `json:"product-map"`
 	Bugs map[int][]bugzilla.Bug `json:"bugs"`
+
+	bugsMap map[int]*bugzilla.Bug
 }
 
 var productCache = ProductCache{
 	Bugs: make(map[int][]bugzilla.Bug),
 	ProductMap: make(map[int]bugzilla.Product),
+	bugsMap: make(map[int]*bugzilla.Bug),
 }
 
 func (p *ProductCache) Load() {
@@ -26,6 +29,12 @@ func (p *ProductCache) Load() {
 		dec := gob.NewDecoder(f)
 		dec.Decode(p)
 		f.Close()
+
+		for _, v := range p.Bugs {
+			for _, bug := range v {
+				p.bugsMap[bug.Id] = &bug
+			}
+		}
 	}
 }
 
@@ -149,10 +158,23 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		pbugs = append(pbugs, *bug)
+
+		if len(after) != 0 {
+			if b, ok := productCache.bugsMap[bug.Id]; ok {
+				*b = *bug
+			} else {
+				productCache.Bugs[id] = append(productCache.Bugs[id], *bug)
+				productCache.bugsMap[bug.Id] = &productCache.Bugs[id][len(productCache.Bugs[id]) - 1]
+			}
+		}
+
 		i++
 	}
 
-	productCache.Bugs[id] = pbugs
+	if len(after) == 0 {
+		productCache.Bugs[id] = pbugs
+	}
+
 	productCache.Save()
 
 	JsonResponse(w, pbugs)
