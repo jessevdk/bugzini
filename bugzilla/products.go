@@ -125,7 +125,8 @@ func (p *Product) Bugs(conn *Conn) (*BugList, error) {
 		conn = p.conn
 	}
 
-	return conn.Bugs().SearchPage(map[string][]string{
+	return conn.Bugs().SearchPage(map[string]interface{}{
 		"product": []string{p.Name},
+		"resolution": "",
 	}, 300)
 }
