@@ -55,11 +55,6 @@ type BugList struct {
 	finished bool
 }
 
-type Query struct {
-	Limit  int
-	Offset int
-}
-
 func (c *Conn) Bugs() Bugs {
 	return Bugs{
 		conn: c,
@@ -130,9 +125,9 @@ func (b *BugList) Get(conn *Conn, i int) (*Bug, error) {
 		paged := false
 
 		if b.pageSize > 0 {
-			if q, ok := b.query.(*Query); ok {
-				q.Limit = b.pageSize
-				q.Offset = n
+			if q, ok := b.query.(map[string]interface{}); ok {
+				q["limit"] = b.pageSize
+				q["offset"] = n
 
 				paged = true
 			}
