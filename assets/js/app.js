@@ -240,8 +240,10 @@ App.prototype._bugs_intersect = function(a, b) {
 App.prototype._do_query_node = function(node, cb) {
     if (typeof node === 'string') {
         // Simply do a filter
+        var nodeci = node.toLowerCase();
+
         cb(function(bug) {
-            return bug.summary.indexOf(node) != -1;
+            return bug._summary_ci.indexOf(nodeci) != -1;
         });
     } else if ('field' in node) {
         if (node.field == 'product' || node.field == 'product-id') {
@@ -267,8 +269,15 @@ App.prototype._do_query_node = function(node, cb) {
                 cb({});
             }
         } else {
+            var nodeci = node.value.toLowerCase();
+            var cif = '_' + node.field + '_ci';
+
             cb(function(bug) {
-                return bug[node.field].indexOf(node.value) != -1;
+                if (bug.hasOwnProperty(cif)) {
+                    return bug[cif].indexOf(nodeci) != -1;
+                } else {
+                    return bug[node.field].indexOf(node.value) != -1;
+                }
             });
         }
     } else {

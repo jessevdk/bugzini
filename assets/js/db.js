@@ -311,6 +311,10 @@ DB.prototype._process_bugs = function(product, bugs, cb) {
         bug.is_open = bug.is_open ? 1 : 0;
         bug.creation_time = Date.parse(bug.creation_time);
         bug.last_change_time = Date.parse(bug.last_change_time);
+        bug._component_ci = bug.component.toLowerCase();
+        bug._severity_ci = bug.severity.toLowerCase();
+        bug._summary_ci = bug.component.toLowerCase();
+        bug._status_ci = bug.status.toLowerCase();
 
         store.put(bug);
     }).bind(this));   
