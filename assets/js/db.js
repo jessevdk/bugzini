@@ -1,6 +1,7 @@
 var DB = function() {
-    var req = indexedDB.deleteDatabase('bugz');
-    req.onsuccess = this.open.bind(this);
+    //var req = indexedDB.deleteDatabase('bugzini');
+    //req.onsuccess = this.open.bind(this);
+    this.open();
 
     this._needs_init_filters = false;
     this.on_filters_updated = function () {};
