@@ -171,11 +171,12 @@ DB.prototype.open = function () {
 
 DB.prototype.open_success = function(e) {
     this.db = e.target.result;
-    this.init_filters();
 
-    if (this.loaded) {
-        this.loaded();
-    }
+    this.init_filters((function() {
+        if (this.loaded) {
+            this.loaded();
+        }
+    }).bind(this));
 }
 
 DB.prototype.open_error = function(e) {
@@ -207,9 +208,10 @@ DB.prototype.upgrade_v1 = function() {
     this._needs_init_filters = true;
 }
 
-DB.prototype.init_filters = function() {
+DB.prototype.init_filters = function(cb) {
     if (this._needs_init_filters) {
         this.init_filters_load();
+        cb();
     } else {
         this.filters().all((function(filters) {
             filters.each((function (filter) {
@@ -220,6 +222,7 @@ DB.prototype.init_filters = function() {
                 }
             }).bind(this));
 
+            cb();
             this.on_filters_updated();
         }).bind(this));
     }
