@@ -344,7 +344,9 @@ DB.prototype._ensure_comments = function(bug, cb) {
     Service.get('/bug/' + bug.id + '/comments', {
         success: (function(req, ret) {
             bug.comments = ret;
-            this._store_bugs(bug.id, [bug], cb);
+            this._store_bugs([bug], function() {
+                cb(bug);
+            });
         }).bind(this)
     })
 }
