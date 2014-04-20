@@ -293,13 +293,7 @@ DB.prototype.init_filters_load = function() {
     });
 }
 
-DB.prototype._process_bugs = function(product, bugs, cb) {
-    var tr = this.db.transaction('products', 'readwrite');
-    var store = tr.objectStore('products');
-
-    store.put({id: product, last_update: new Date()});
-
-    // Update bugs
+DB.prototype._store_bugs = function(bugs, cb) {
     var tr = this.db.transaction('bugs', 'readwrite');
     var store = tr.objectStore('bugs');
 
@@ -317,7 +311,17 @@ DB.prototype._process_bugs = function(product, bugs, cb) {
         bug._status_ci = bug.status.toLowerCase();
 
         store.put(bug);
-    }).bind(this));   
+    }).bind(this));
+}
+
+DB.prototype._process_bugs = function(product, bugs, cb) {
+    var tr = this.db.transaction('products', 'readwrite');
+    var store = tr.objectStore('products');
+
+    store.put({id: product, last_update: new Date()});
+
+    // Update bugs
+    this._store_bugs(bugs, cb);
 }
 
 DB.prototype.ensure_product = function(id, cb) {
@@ -332,6 +336,33 @@ DB.prototype.ensure_product = function(id, cb) {
                     this._process_bugs(id, ret, cb);
                 }).bind(this)
             });
+        }
+    }).bind(this));
+}
+
+DB.prototype._ensure_comments = function(bug, cb) {
+    Service.get('/bug/' + bug.id + '/comments', {
+        success: (function(req, ret) {
+            bug.comments = ret;
+            this._store_bugs(bug.id, [bug], cb);
+        }).bind(this)
+    })
+}
+
+DB.prototype.ensure_bug = function(id, cb) {
+    var store = this.bugs();
+
+    store.find(id, (function(record) {
+        if (record && record.comments && record.comments.length > 0) {
+            cb(record);
+        } else if (!record) {
+            Service.Get('/bug/' + id, {
+                success: (function(req, ret) {
+                    this._ensure_comments(ret, cb);
+                }).bind(this)
+            });
+        } else {
+            this._ensure_comments(record, cb);
         }
     }).bind(this));
 }
