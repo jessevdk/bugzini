@@ -113,7 +113,7 @@ App.prototype._date_for_display = function(date) {
         "Dec"
     ];
 
-    var ret = months[date.getMonth()] + " " + (date.getDay() + 1);
+    var ret = months[date.getMonth()] + " " + date.getDate();
 
     if (now.getFullYear() != date.getFullYear()) {
         ret += ", " + date.getFullYear();
