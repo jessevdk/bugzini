@@ -6,13 +6,9 @@
 }
 
 #content .search {
-  width: 600px;
+  width: 70%;
   margin: 0 auto;
   margin-top: 30px;
-}
-
-#content .search input {
-  width: 568px;
 }
 
 .star,
