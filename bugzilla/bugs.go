@@ -3,6 +3,7 @@ package bugzilla
 import (
 	"errors"
 	"time"
+	"fmt"
 )
 
 type Bug struct {
@@ -23,7 +24,17 @@ type Bug struct {
 	Status         string    `xmlrpc:"status" json:"status"`
 	Summary        string    `xmlrpc:"summary" json:"summary"`
 
-	attachments []Attachment
+	Comments    []Comment    `json:"comments"`
+	Attachments []Attachment `json:"attachments"`
+}
+
+type Comment struct {
+	Id             int       `xmlrpc:"id" json:"id"`
+	BugId          int       `xmlrpc:"bug_id" json:"bug_id"`
+	AttachmentId   int       `xmlrpc:"attachment_id" json:"attachment_id"`
+	Text           string    `xmlrpc:"text" json:"text"`
+	Author         string    `xmlrpc:"author" json:"author"`
+	Time           time.Time `xmlrpc:"time" json:"time"`
 }
 
 type Attachment struct {
@@ -97,6 +108,64 @@ func (b Bugs) Get(conn *Conn, id int) (Bug, error) {
 	return ret[0], nil
 }
 
+func (b Bugs) GetAllComments(conn *Conn, ids []int) ([]Comment, error) {
+	args := struct {
+		Ids []int `xmlrpc:"ids"`
+	}{
+		Ids: ids,
+	}
+
+	var ret struct {
+		Bugs map[string]struct{
+			Comments []Comment `xmlrpc:"comments"`
+		} `xmlrpc:"bugs"`
+	}
+
+	if err := conn.Call("Bug.comments", args, &ret); err != nil {
+		return nil, err
+	}
+
+	retval := make([]Comment, 0)
+
+	for _, b := range ret.Bugs {
+		retval = append(retval, b.Comments...)
+	}
+
+	return retval, nil
+}
+
+func (b Bugs) GetComments(conn *Conn, id int) ([]Comment, error) {
+	ret, err := b.GetAllComments(conn, []int{id})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (b Bugs) GetCommentsAfter(conn *Conn, id int, after time.Time) ([]Comment, error) {
+	args := struct {
+		Ids []int `xmlrpc:"ids"`
+		NewSince time.Time `xmlrpc:"new_since"`
+	}{
+		Ids: []int{id},
+		NewSince: after,
+	}
+
+	var ret struct {
+		Bugs map[string]struct{
+			Comments []Comment `xmlrpc:"comments"`
+		} `xmlrpc:"bugs"`
+	}
+
+	if err := conn.Call("Bug.comments", args, &ret); err != nil {
+		return nil, err
+	}
+
+	return ret.Bugs[fmt.Sprintf("%v", id)].Comments, nil
+}
+
 func (p Bugs) SearchPage(query interface{}, pageSize int) (*BugList, error) {
 	return &BugList{
 		conn:     p.conn,
@@ -153,30 +222,3 @@ func (b *BugList) Get(conn *Conn, i int) (*Bug, error) {
 	return &b.bugs[i], nil
 }
 
-func (b *Bug) Attachments(conn *Conn) ([]Attachment, error) {
-	if conn == nil {
-		conn = b.conn
-	}
-
-	if b.attachments != nil {
-		return b.attachments, nil
-	}
-
-	args := struct {
-		Ids []int `xmlrpc:"ids" json:"ids"`
-	}{
-		Ids: []int{b.Id},
-	}
-
-	var ret struct {
-		Bugs        map[int][]Attachment `xmlrpc:"bugs" json:"bugs"`
-		Attachments map[int]Attachment   `xmlrpc:"attachments" json:"attachments"`
-	}
-
-	if err := conn.Call("Bug.attachments", args, &ret); err != nil {
-		return nil, err
-	}
-
-	b.attachments = ret.Bugs[b.Id]
-	return b.attachments, nil
-}
