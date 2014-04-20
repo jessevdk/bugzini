@@ -1,4 +1,5 @@
 .deps
 .products-cache
+.bugs-cache
 assets.go
 bugzini
