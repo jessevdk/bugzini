@@ -356,7 +356,7 @@ DB.prototype.ensure_bug = function(id, cb) {
         if (record && record.comments && record.comments.length > 0) {
             cb(record);
         } else if (!record) {
-            Service.Get('/bug/' + id, {
+            Service.get('/bug/' + id, {
                 success: (function(req, ret) {
                     this._ensure_comments(ret, cb);
                 }).bind(this)
