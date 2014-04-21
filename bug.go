@@ -5,37 +5,11 @@ import (
 	"net/http"
 	"strconv"
 	"bugzilla"
-	"os"
-	"encoding/gob"
 	"time"
 )
 
-type BugsCache struct {
-	Bugs map[int]*bugzilla.Bug
-}
-
-var bugsCache = BugsCache{
-	Bugs: make(map[int]*bugzilla.Bug),
-}
-
-func (b *BugsCache) Load() {
-	if f, err := os.Open(".bugs-cache"); err == nil {
-		dec := gob.NewDecoder(f)
-		dec.Decode(b)
-		f.Close()
-	}
-}
-
-func (b *BugsCache) Save() {
-	if f, err := os.Create(".bugs-cache"); err == nil {
-		enc := gob.NewEncoder(f)
-		enc.Encode(b)
-		f.Close()
-	}
-}
-
 func BugGet(id int) (*bugzilla.Bug, error) {
-	if bug, ok := bugsCache.Bugs[id]; ok {
+	if bug, ok := cache.bugsMap[id]; ok {
 		return bug, nil
 	}
 
@@ -51,8 +25,8 @@ func BugGet(id int) (*bugzilla.Bug, error) {
 		return nil, err
 	}
 
-	bugsCache.Bugs[bug.Id] = &bug
-	bugsCache.Save()
+	cache.bugsMap[bug.Id] = &bug
+	cache.Save()
 
 	return &bug, nil
 }
@@ -140,6 +114,12 @@ func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, v := range comments {
+		if v.Time.After(bug.LastChangeTime) {
+			bug.LastChangeTime = v.Time
+		}
+	}
+
 	if len(after) == 0 {
 		bug.Comments = comments
 	} else if len(bug.Comments) > 0 {
@@ -152,13 +132,11 @@ func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	bugsCache.Save()
+	cache.Save()
 	JsonResponse(w, comments)
 }
 
 func init() {
 	router.HandleFunc("/api/bug/{id:[0-9]+}/comments", BugCommentsHandler)
 	router.HandleFunc("/api/bug/{id:[0-9]+}", BugHandler)
-
-	bugsCache.Load()
 }

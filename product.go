@@ -2,49 +2,11 @@ package main
 
 import (
 	"bugzilla"
-	"encoding/gob"
 	"github.com/gorilla/mux"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 )
-
-type ProductCache struct {
-	Products []bugzilla.Product `json:"products"`
-	ProductMap map[int]bugzilla.Product `json:"product-map"`
-	Bugs map[int][]bugzilla.Bug `json:"bugs"`
-
-	bugsMap map[int]*bugzilla.Bug
-}
-
-var productCache = ProductCache{
-	Bugs: make(map[int][]bugzilla.Bug),
-	ProductMap: make(map[int]bugzilla.Product),
-	bugsMap: make(map[int]*bugzilla.Bug),
-}
-
-func (p *ProductCache) Load() {
-	if f, err := os.Open(".products-cache"); err == nil {
-		dec := gob.NewDecoder(f)
-		dec.Decode(p)
-		f.Close()
-
-		for _, v := range p.Bugs {
-			for _, bug := range v {
-				p.bugsMap[bug.Id] = &bug
-			}
-		}
-	}
-}
-
-func (p *ProductCache) Save() {
-	if f, err := os.Create(".products-cache"); err == nil {
-		enc := gob.NewEncoder(f)
-		enc.Encode(p)
-		f.Close()
-	}
-}
 
 func ProductHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
@@ -67,7 +29,7 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := int(idv)
 
-	if product, ok := productCache.ProductMap[id]; ok {
+	if product, ok := cache.ProductMap[id]; ok {
 		JsonResponse(w, product)
 		return
 	}
@@ -79,8 +41,8 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	productCache.ProductMap[id] = product
-	productCache.Save()
+	cache.ProductMap[id] = product
+	cache.Save()
 
 	JsonResponse(w, product)
 }
@@ -106,7 +68,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, ok := productCache.ProductMap[id]
+	product, ok := cache.ProductMap[id]
 
 	if !ok {
 		product, err = client.Products().Get(client, id)
@@ -116,15 +78,15 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		productCache.ProductMap[id] = product
-		productCache.Save()
+		cache.ProductMap[id] = product
+		cache.Save()
 	}
 
 	after := r.FormValue("after")
 
 	// Only use cache if not asking for bugs after a certain date
 	if len(after) == 0 {
-		if bugs, ok := productCache.Bugs[id]; ok {
+		if bugs, ok := cache.Bugs[id]; ok {
 			JsonResponse(w, bugs)
 			return
 		}
@@ -152,7 +114,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	i := 0
-	pbugs := make([]bugzilla.Bug, 0)
+	pbugs := make([]*bugzilla.Bug, 0)
 
 	for {
 		bug, err := bugs.Get(client, i)
@@ -161,14 +123,14 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		pbugs = append(pbugs, *bug)
+		pbugs = append(pbugs, bug)
 
 		if len(after) != 0 {
-			if b, ok := productCache.bugsMap[bug.Id]; ok {
+			if b, ok := cache.bugsMap[bug.Id]; ok {
 				*b = *bug
 			} else {
-				productCache.Bugs[id] = append(productCache.Bugs[id], *bug)
-				productCache.bugsMap[bug.Id] = &productCache.Bugs[id][len(productCache.Bugs[id]) - 1]
+				cache.Bugs[id] = append(cache.Bugs[id], bug)
+				cache.bugsMap[bug.Id] = cache.Bugs[id][len(cache.Bugs[id]) - 1]
 			}
 		}
 
@@ -176,10 +138,10 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(after) == 0 {
-		productCache.Bugs[id] = pbugs
+		cache.Bugs[id] = pbugs
 	}
 
-	productCache.Save()
+	cache.Save()
 
 	JsonResponse(w, pbugs)
 }
@@ -187,8 +149,8 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
 
-	if productCache.Products != nil {
-		JsonResponse(w, productCache.Products)
+	if cache.Products != nil {
+		JsonResponse(w, cache.Products)
 		return
 	}
 
@@ -219,13 +181,13 @@ func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
 		ret = append(ret, p)
 	}
 
-	productCache.Products = ret
+	cache.Products = ret
 
 	for _, p := range ret {
-		productCache.ProductMap[p.Id] = p
+		cache.ProductMap[p.Id] = p
 	}
 
-	productCache.Save()
+	cache.Save()
 
 	JsonResponse(w, ret)
 }
@@ -234,6 +196,4 @@ func init() {
 	router.HandleFunc("/api/product/all", ProductAllHandler)
 	router.HandleFunc("/api/product/{id:[0-9]+}", ProductHandler)
 	router.HandleFunc("/api/product/{id:[0-9]+}/bugs", ProductBugsHandler)
-
-	productCache.Load()
 }

@@ -7,8 +7,47 @@ import (
 	"github.com/jessevdk/go-flags"
 	"net"
 	"net/http"
+	"encoding/gob"
+	"bugzilla"
 	"os"
 )
+
+type Cache struct {
+	Products []bugzilla.Product
+	ProductMap map[int]bugzilla.Product
+	Bugs map[int][]*bugzilla.Bug
+
+	bugsMap map[int]*bugzilla.Bug
+}
+
+var cache = Cache{
+	Bugs: make(map[int][]*bugzilla.Bug),
+	ProductMap: make(map[int]bugzilla.Product),
+	bugsMap: make(map[int]*bugzilla.Bug),
+}
+
+func (c *Cache) Load() {
+	if f, err := os.Open(".cache"); err == nil {
+		dec := gob.NewDecoder(f)
+		dec.Decode(c)
+		f.Close()
+
+		for _, v := range c.Bugs {
+			for _, bug := range v {
+				c.bugsMap[bug.Id] = bug
+			}
+		}
+	}
+}
+
+func (c *Cache) Save() {
+	if f, err := os.Create(".cache"); err == nil {
+		enc := gob.NewEncoder(f)
+		enc.Encode(c)
+		f.Close()
+	}
+}
+
 
 var router = mux.NewRouter()
 
@@ -48,6 +87,8 @@ func main() {
 	if _, err := flags.Parse(&options); err != nil {
 		os.Exit(1)
 	}
+
+	cache.Load()
 
 	if options.Debug {
 		Assets.LocalPath = "."
