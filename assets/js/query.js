@@ -169,7 +169,7 @@ Query.prototype._binary_query = function(query) {
         }
 
         for (var i = 1; i < query.all.length; i++) {
-            node = {type: 'either', left: node, right: this._binary_query(query.all[i])};
+            node = {type: 'all', left: node, right: this._binary_query(query.all[i])};
         }
     }
 
