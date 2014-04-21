@@ -42,6 +42,26 @@ DB.prototype.Store.prototype.only = function(val) {
     return ret;
 }
 
+DB.prototype.Store.prototype.upper = function(val) {
+    var ret = this._copy();
+
+    ret._range = IDBKeyRange.upperBound(val);
+    return ret;
+}
+
+DB.prototype.Store.prototype.lower = function(val) {
+    var ret = this._copy();
+
+    ret._range = IDBKeyRange.lowerBound(val);
+    return ret;
+}
+DB.prototype.Store.prototype.bound = function(lower, upper) {
+    var ret = this._copy();
+
+    ret._range = IDBKeyRange.bound(lower, upper);
+    return ret;
+}
+
 DB.prototype.Store.prototype._copy = function() {
     var ret = new this._db.Store(this._db, this._name);
 
