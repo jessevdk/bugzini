@@ -96,6 +96,8 @@ App.prototype._show_bug = function(id) {
     this.db.ensure_bug(id, (function(bug, loading) {
         this._bug = bug;
         this._render_bug(loading);
+
+        return true;
     }).bind(this));
 }
 
@@ -108,7 +110,7 @@ App.prototype._render_bug = function(loading) {
     var hsum = hbug.querySelector('#bug-summary');
     hsum.textContent = this._bug.summary;
 
-    var templ = $$.query('template#bug-comment');
+    var templ = $$.query('template#bug-comment-template');
 
     var hcomments = hbug.querySelector('#bug-comments')
     hcomments.innerHTML = '';
@@ -129,13 +131,42 @@ App.prototype._render_bug = function(loading) {
     ul.appendChild(li);
 
     if (this._bug.hasOwnProperty('comments') && this._bug.comments) {
-        this._bug.comments.each((function(c) {
+        var wascollapsed = false;
+
+        for (var i = 0; i < this._bug.comments.length; i++) {
+            var c = this._bug.comments[i];
+
             var h = md5(c.author);
             var url = 'http://www.gravatar.com/avatar/' + h + '?s=24&d=mm';
 
             var d = new Date(c.time);
             
             templ.content.querySelector('img#comment-avatar').src = url;
+
+            var cm = templ.content.querySelector('#bug-comment');
+            var cmcls;
+            var iscollapsed = false;
+
+            if (c.is_unread || i == 0 || i == this._bug.comments.length - 1) {
+                cmcls = ['expanded', 'collapsed'];
+            } else {
+                cmcls = ['collapsed', 'expanded'];
+                iscollapsed = true;
+            }
+
+            if (!cm.classList.contains(cmcls[0])) {
+                cm.classList.add(cmcls[0]);
+            }
+
+            if (!wascollapsed && iscollapsed) {
+                cm.classList.add('first');
+            } else {
+                cm.classList.remove('first');
+            }
+
+            wascollapsed = iscollapsed;
+
+            cm.classList.remove(cmcls[1]);
 
             var atp = c.author.indexOf('@');
             var author;
@@ -152,8 +183,18 @@ App.prototype._render_bug = function(loading) {
 
             var clone = document.importNode(templ.content, true);
             hcomments.appendChild(clone);
-        }).bind(this));
+        }
     }
+
+    var allcollapsed = hcomments.querySelectorAll('#bug-comment.collapsed');
+
+    allcollapsed.each(function (elem) {
+        elem.addEventListener('click', function() {
+            allcollapsed.each(function(e) {
+                e.classList.remove('collapsed');
+            });
+        });
+    });
 
     if (loading) {
         var spinner = document.createElement('div');

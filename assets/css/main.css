@@ -207,6 +207,11 @@ col.id {
   border-top: 0;
   border-radius: 0px 0px 6px 6px;
   padding: 12px;
+  opacity: 1;
+  transition: opacity 500ms;
+  white-space: pre-wrap;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 #bug-comment {
@@ -255,6 +260,30 @@ a {
 
 #bugs_list tr.unread td {
   font-weight: bold;
+}
+
+#bug-comment.collapsed #comment-text {
+  height: 0;
+  opacity: 0;
+  padding: 0;
+}
+
+#bug-comment.collapsed {
+  margin-bottom: -3px;
+  cursor: pointer;
+}
+
+#bug-comment.collapsed.first {
+  margin-top: -16px;
+}
+
+#bug-comment.collapsed:not(.first) {
+  height: 6px;
+  overflow: hidden;
+}
+
+#bug-comment.collapsed:not(.first) #comment-header {
+  border-radius: 0;
 }
 
 /* vi:ts=2:et */
