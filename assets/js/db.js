@@ -406,6 +406,12 @@ DB.prototype.ensure_bug = function(id, cb) {
         } else if (!record) {
             Service.get('/bug/' + id, {
                 success: (function(req, ret) {
+                    if (ret.comments) {
+                        for (var i = 0; i < ret.comments.length; i++) {
+                            ret.comments[i].time = Date.parse(ret.comments[i].time);
+                        }
+                    }
+
                     this._ensure_comments(ret, cb);
                 }).bind(this)
             });
