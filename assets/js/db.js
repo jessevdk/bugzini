@@ -319,7 +319,9 @@ DB.prototype._store_bugs = function(bugs, fixit, cb) {
     var store = tr.objectStore('bugs');
 
     tr.oncomplete = function() {
-        cb();
+        if (cb) {
+            cb();
+        }
     }
 
     bugs.each((function (bug) {
@@ -386,10 +388,38 @@ DB.prototype._ensure_comments = function(bug, cb) {
             }
 
             this._store_bugs([bug], false, function() {
-                cb(bug);
+                this._mark_read(bug, cb(bug));
             });
         }).bind(this)
     })
+}
+
+DB.prototype._mark_read = function(bug, val) {
+    if (!val) {
+        return;
+    }
+
+    var needssave = false;
+
+    if (bug.is_unread) {
+        needssave = true;
+    }
+
+    bug.is_unread = 0;
+
+    if (bug.comments) {
+        for (var i = 0; i < bug.comments.length; i++) {
+            if (bug.comments[i].is_unread) {
+                needssave = true;
+            }
+
+            bug.comments[i].is_unread = 0;
+        }
+    }
+
+    if (needssave) {
+        this._store_bugs([bug], false);
+    }
 }
 
 DB.prototype.ensure_bug = function(id, cb) {
@@ -401,7 +431,7 @@ DB.prototype.ensure_bug = function(id, cb) {
                 cb(record, true);
                 this._ensure_comments(record, cb);
             } else {
-                cb(record);
+                this._mark_read(record, cb(record));
             }
         } else if (!record) {
             Service.get('/bug/' + id, {
