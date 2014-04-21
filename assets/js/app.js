@@ -255,6 +255,9 @@ App.prototype._render_bugs_list = function() {
         }
     }
 
+    var found = $$.query('#search-bugs-found');
+    found.innerText = this._bugs.length + ' found matching criteria';
+
     var list = $$.query('#bugs_list');
 
     for (var i = 0; i < this._bugs.length; i++) {

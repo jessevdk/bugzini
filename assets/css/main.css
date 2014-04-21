@@ -236,4 +236,13 @@ a {
   color: #268BD2;
 }
 
+#search-bugs-found {
+  height: 1em;
+  text-align: center;
+  margin-top: 6px;
+  color: #999;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
 /* vi:ts=2:et */
