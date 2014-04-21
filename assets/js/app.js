@@ -372,7 +372,11 @@ App.prototype._do_query_node = function(node, cb) {
         var nodeci = node.toLowerCase();
 
         cb(function(bug) {
-            return bug._summary_ci.indexOf(nodeci) != -1;
+            if (bug.hasOwnProperty('_summary_ci') && bug._summary_ci) {
+                return bug._summary_ci.indexOf(nodeci) != -1;
+            } else {
+                return bug.summary.toLowerCase().indexOf(nodeci) != -1;
+            }
         });
     } else if ('field' in node) {
         if (node.field == 'product' || node.field == 'product-id') {
@@ -402,7 +406,7 @@ App.prototype._do_query_node = function(node, cb) {
             var cif = '_' + node.field + '_ci';
 
             cb(function(bug) {
-                if (bug.hasOwnProperty(cif)) {
+                if (bug.hasOwnProperty(cif) && bug[cif]) {
                     return bug[cif].indexOf(nodeci) != -1;
                 } else {
                     return bug[node.field].indexOf(node.value) != -1;
