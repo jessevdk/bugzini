@@ -293,7 +293,7 @@ DB.prototype.init_filters_load = function() {
     });
 }
 
-DB.prototype._store_bugs = function(bugs, cb) {
+DB.prototype._store_bugs = function(bugs, fixit, cb) {
     var tr = this.db.transaction('bugs', 'readwrite');
     var store = tr.objectStore('bugs');
 
@@ -302,13 +302,15 @@ DB.prototype._store_bugs = function(bugs, cb) {
     }
 
     bugs.each((function (bug) {
-        bug.is_open = bug.is_open ? 1 : 0;
-        bug.creation_time = Date.parse(bug.creation_time);
-        bug.last_change_time = Date.parse(bug.last_change_time);
-        bug._component_ci = bug.component.toLowerCase();
-        bug._severity_ci = bug.severity.toLowerCase();
-        bug._component_ci = bug.component.toLowerCase();
-        bug._status_ci = bug.status.toLowerCase();
+        if (fixit) {
+            bug.is_open = bug.is_open ? 1 : 0;
+            bug.creation_time = Date.parse(bug.creation_time);
+            bug.last_change_time = Date.parse(bug.last_change_time);
+            bug._component_ci = bug.component.toLowerCase();
+            bug._severity_ci = bug.severity.toLowerCase();
+            bug._component_ci = bug.component.toLowerCase();
+            bug._status_ci = bug.status.toLowerCase();
+        }
 
         store.put(bug);
     }).bind(this));
@@ -321,7 +323,7 @@ DB.prototype._process_bugs = function(product, bugs, cb) {
     store.put({id: product, last_update: new Date()});
 
     // Update bugs
-    this._store_bugs(bugs, cb);
+    this._store_bugs(bugs, true, cb);
 }
 
 DB.prototype.ensure_product = function(id, cb) {
@@ -344,7 +346,7 @@ DB.prototype._ensure_comments = function(bug, cb) {
     Service.get('/bug/' + bug.id + '/comments', {
         success: (function(req, ret) {
             bug.comments = ret;
-            this._store_bugs([bug], function() {
+            this._store_bugs([bug], false, function() {
                 cb(bug);
             });
         }).bind(this)
