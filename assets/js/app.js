@@ -117,15 +117,15 @@ App.prototype._render_bug = function(loading) {
     ul.innerHTML = '';
 
     var li = document.createElement('li');
-    li.innerText = this._bug.product;
+    li.textContent = this._bug.product;
     ul.appendChild(li);
 
     var li = document.createElement('li');
-    li.innerText = this._bug.severity;
+    li.textContent = this._bug.severity;
     ul.appendChild(li);
 
     var li = document.createElement('li');
-    li.innerText = this._bug.status;
+    li.textContent = this._bug.status;
     ul.appendChild(li);
 
     if (this._bug.hasOwnProperty('comments') && this._bug.comments) {
@@ -146,9 +146,9 @@ App.prototype._render_bug = function(loading) {
                 author = c.author;
             }
 
-            templ.content.querySelector('#comment-author').innerText = author;
-            templ.content.querySelector('#comment-date').innerText = this._date_for_display(d);
-            templ.content.querySelector('#comment-text').innerText = c.text;
+            templ.content.querySelector('#comment-author').textContent = author;
+            templ.content.querySelector('#comment-date').textContent = this._date_for_display(d);
+            templ.content.querySelector('#comment-text').textContent = c.text;
 
             var clone = document.importNode(templ.content, true);
             hcomments.appendChild(clone);
@@ -254,7 +254,7 @@ App.prototype._render_bugs_list = function() {
     }
 
     var found = $$.query('#search-bugs-found');
-    found.innerText = this._bugs.length + ' matches';
+    found.textContent = this._bugs.length + ' matches';
 
     var list = $$.query('#bugs_list');
 
