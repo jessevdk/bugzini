@@ -247,6 +247,7 @@ DB.prototype.upgrade_v1 = function() {
 
     var bugs = this.db.createObjectStore('bugs', { keyPath: 'id' });
     bugs.createIndex('starred', 'starred', { unique: false });
+    bugs.createIndex('is_unread', 'is_unread', { unique: false });
     bugs.createIndex('product', 'product', { unique: false });
     bugs.createIndex('product_open', ['product', 'is_open'], { unique: false });
     bugs.createIndex('last_change_time', 'last_change_time', { unique: false });
@@ -363,9 +364,27 @@ DB.prototype.ensure_product = function(id, cb) {
 }
 
 DB.prototype._ensure_comments = function(bug, cb) {
-    Service.get('/bug/' + bug.id + '/comments', {
+    var after;
+
+    if (bug.comments && bug.comments.length > 0) {
+        after = (bug.comments[bug.comments.length - 1].time / 1000);
+    } else {
+        after = 0;
+    }
+
+    Service.get('/bug/' + bug.id + '/comments?after=' + after, {
         success: (function(req, ret) {
-            bug.comments = ret;
+            for (var i = 0; i < ret.length; i++) {
+                ret[i].is_unread = 1;
+                ret[i].time = Date.parse(ret[i].time);
+            }
+
+            if (!bug.comments) {
+                bug.comments = ret;
+            } else {
+                bug.comments = bug.comments.concat(ret);
+            }
+
             this._store_bugs([bug], false, function() {
                 cb(bug);
             });
@@ -378,7 +397,12 @@ DB.prototype.ensure_bug = function(id, cb) {
 
     store.find(id, (function(record) {
         if (record && record.comments && record.comments.length > 0) {
-            cb(record);
+            if (record.is_unread) {
+                cb(record, true);
+                this._ensure_comments(record, cb);
+            } else {
+                cb(record);
+            }
         } else if (!record) {
             Service.get('/bug/' + id, {
                 success: (function(req, ret) {
@@ -386,29 +410,31 @@ DB.prototype.ensure_bug = function(id, cb) {
                 }).bind(this)
             });
         } else {
-            cb(record);
+            cb(record, true);
             this._ensure_comments(record, cb);
         }
     }).bind(this));
 }
 
 DB.prototype.update_product = function(id, cb) {
-    var store = new this.Store(this, 'products');
-
-    store.find(id, (function(record) {
+    this.filters().find(id, (function(record) {
         if (!record) {
             cb();
             return;
         }
 
         var name = record.name;
-        var store = this.bugs().index('product_last_change_time').reverse();
+        var store = this.bugs().index('product_last_change_time').reverse().bound([name], [name + '\t']);
 
         store.cursor((function(cursor) {
             var bug = cursor.value;
 
             Service.get('/product/' + id + '/bugs?after=' + bug.last_change_time / 1000, {
                 success: (function(req, ret) {
+                    for (var i = 0; i < ret.length; i++) {
+                        ret[i].is_unread = 1;
+                    }
+
                     this._process_bugs(id, ret, cb);
                 }).bind(this)
             });

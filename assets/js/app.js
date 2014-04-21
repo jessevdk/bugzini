@@ -261,9 +261,14 @@ App.prototype._render_bugs_list = function() {
     for (var i = 0; i < this._bugs.length; i++) {
         var bug = this._bugs[i];
         var date = this._date_for_display(new Date(bug.creation_time));
+        var cls = '';
+
+        if (bug.is_unread) {
+            cls = 'unread';
+        }
 
         rows += '\
-<tr class="' + html_escape(bug.severity) + '">\
+<tr class="' + html_escape(bug.severity) + ' ' + cls + '">\
   <td><span class="severity">' + html_escape(bug.severity.substring(0, 2)) + '</span></td>\
   <td>';
 

@@ -253,4 +253,8 @@ a {
   font-size: 0.9em;
 }
 
+#bugs_list tr.unread td {
+  font-weight: bold;
+}
+
 /* vi:ts=2:et */
