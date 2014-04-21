@@ -216,28 +216,26 @@ App.prototype._required_products_from_query = function(query) {
 App.prototype._date_for_display = function(date) {
     var now = new Date();
 
-    var months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
+    var parts = [
+        [60, 'second', 'seconds'],
+        [60, 'minute', 'minutes'],
+        [24, 'hour', 'hours'],
+        [30, 'day', 'days'],
+        [12, 'month', 'months'],
+        [-1, 'year', 'years']
     ];
 
-    var ret = months[date.getMonth()] + " " + date.getDate();
+    var difft = (now.getTime() / 1000) - (date.getTime() / 1000);
 
-    if (now.getFullYear() != date.getFullYear()) {
-        ret += ", " + date.getFullYear();
+    for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+
+        if (difft < p[0] || p[0] == -1) {
+            return difft + ' ' + (difft == 1 ? p[1] : p[2]) + ' ago';
+        }
+
+        difft = Math.floor(difft / p[0]);
     }
-
-    return ret;
 }
 
 App.prototype._render_bugs_list = function() {
