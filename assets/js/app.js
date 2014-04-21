@@ -69,8 +69,6 @@ App.prototype._route = function() {
 
 App.prototype._hide_bugs_list = function() {
     var list = new $($$.query('#bugs_list'));
-
-    list.query('tbody').innerHTML = '';
     list.elem.style.display = '';
 }
 
