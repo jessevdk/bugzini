@@ -232,6 +232,14 @@ a {
   transition: color 200ms ease;
 }
 
+#bugs_list tr.critical a {
+  color: #dc322f;
+}
+
+#bugs_list tr.critical a:hover {
+  color: #268BD2;
+}
+
 #bugs_list a:hover {
   color: #268BD2;
 }
