@@ -147,7 +147,12 @@ col.id {
 }
 
 #bug-header {
-  margin-bottom: 15px;  
+}
+
+#bug-info {
+  text-align: center;
+  margin-bottom: 30px;
+  margin-top: 12px;
 }
 
 #bug-info ul {
@@ -157,13 +162,15 @@ col.id {
 }
 
 #bug-info ul li {
-  float: right;
+  display: inline-block;
   margin-right: 3px;
-  border: 1px solid #aaa;
+  border: 1px solid #ccc;
   background-color: #f5f5f5;
   padding: 3px;
   border-radius: 3px;
   font-size: 0.8em;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 #bug-summary-container {
@@ -171,7 +178,6 @@ col.id {
   font-size: 1.2em;
   color: #268BD2;
   text-align: center;
-  margin-bottom: 30px;
 }
 
 #bug-comment:first-of-type #comment-header {

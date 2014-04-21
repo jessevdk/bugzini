@@ -120,6 +120,11 @@ App.prototype._render_bug = function(loading) {
 
     var li = document.createElement('li');
     li.textContent = this._bug.product;
+
+    if (this._bug.component) {
+        li.textContent += ' / ' + this._bug.component;
+    }
+
     ul.appendChild(li);
 
     var li = document.createElement('li');
