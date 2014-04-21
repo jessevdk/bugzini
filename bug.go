@@ -58,6 +58,8 @@ func BugGet(id int) (*bugzilla.Bug, error) {
 }
 
 func BugHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
 	vars := mux.Vars(r)
 
 	idl, err := strconv.ParseInt(vars["id"], 10, 32)
@@ -80,6 +82,8 @@ func BugHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
 	vars := mux.Vars(r)
 
 	idl, err := strconv.ParseInt(vars["id"], 10, 32)

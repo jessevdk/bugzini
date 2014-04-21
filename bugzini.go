@@ -23,6 +23,12 @@ var options struct {
 	} `group:"Bugzilla Options"`
 }
 
+func noCache(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
+	w.Header().Set("Pragma", "no-cache") // HTTP 1.0.
+	w.Header().Set("Expires", "0") // Proxies
+}
+
 func SiteHandler(w http.ResponseWriter, r *http.Request) {
 	r.URL.Path = "/assets/"
 	router.ServeHTTP(w, r)

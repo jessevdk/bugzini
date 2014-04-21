@@ -47,6 +47,8 @@ func (p *ProductCache) Save() {
 }
 
 func ProductHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
 	vars := mux.Vars(r)
 
 	client, err := Bz()
@@ -84,6 +86,8 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
 	vars := mux.Vars(r)
 
 	idv, err := strconv.ParseInt(vars["id"], 10, 32)
@@ -181,6 +185,8 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
 	if productCache.Products != nil {
 		JsonResponse(w, productCache.Products)
 		return
