@@ -387,9 +387,9 @@ DB.prototype._ensure_comments = function(bug, cb) {
                 bug.comments = bug.comments.concat(ret);
             }
 
-            this._store_bugs([bug], false, function() {
+            this._store_bugs([bug], false, (function() {
                 this._mark_read(bug, cb(bug));
-            });
+            }).bind(this));
         }).bind(this)
     })
 }
