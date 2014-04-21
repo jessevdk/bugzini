@@ -17,6 +17,7 @@ App.prototype.init = function() {
     this._filter_map = {};
     this._bugs = [];
     this._refreshing = {};
+    this._bug = null;
 
     this.searches['search-filters'].on_update = this.on_search_filters.bind(this);
 
@@ -46,8 +47,125 @@ App.prototype.init = function() {
     this._active_filter = null;
 
     this.db.loaded = (function() {
-        this._update_bugs_list();
+        this._route();
+
+        window.addEventListener('popstate', (function(s) {
+            this._route();
+        }).bind(this));
     }).bind(this);
+}
+
+App.prototype._route = function() {
+    var pname = document.location.pathname;
+
+    var m = pname.match('/bug/([0-9]+)');
+
+    if (m) {
+        this._show_bug(parseInt(m[1]));
+    } else {
+        this._show_bugs_list()
+    }
+}
+
+App.prototype._hide_bugs_list = function() {
+    var list = new $($$.query('#bugs_list'));
+
+    list.query('tbody').innerHTML = '';
+    list.elem.style.display = '';
+}
+
+App.prototype._hide_bug = function() {
+    var bug = new $($$.query('#bug'));
+    bug.elem.style.display = '';
+}
+
+App.prototype._show_bugs_list = function() {
+    if (document.location.pathname != '/') {
+        history.pushState({}, null, '/');
+    }
+
+    this._hide_bug();
+
+    var list = $$.query('#bugs_list');
+    list.style.display = "table";
+
+    this._update_bugs_list();
+}
+
+App.prototype._show_bug = function(id) {
+    this._hide_bugs_list();
+
+    this.db.ensure_bug(id, (function(bug) {
+        this._bug = bug;
+        this._render_bug();
+    }).bind(this));
+}
+
+App.prototype._render_bug = function() {
+    var hbug = $$.query('#bug');
+
+    var hid = hbug.querySelector('#bug-id');
+    hid.innerText = this._bug.id;
+
+    var hsum = hbug.querySelector('#bug-summary');
+    hsum.innerText = this._bug.summary;
+
+    var templ = $$.query('template#bug-comment');
+
+    var hcomments = hbug.querySelector('#bug-comments')
+    hcomments.innerHTML = '';
+
+    var ul = hbug.querySelector('#bug-info ul');
+    ul.innerHTML = '';
+
+    var li = document.createElement('li');
+    li.innerText = this._bug.product;
+    ul.appendChild(li);
+
+    var li = document.createElement('li');
+    li.innerText = this._bug.severity;
+    ul.appendChild(li);
+
+    var li = document.createElement('li');
+    li.innerText = this._bug.status;
+    ul.appendChild(li);
+
+    if (this._bug.hasOwnProperty('comments') && this._bug.comments) {
+        this._bug.comments.each((function(c) {
+            var h = md5(c.author);
+            var url = 'http://www.gravatar.com/avatar/' + h + '?s=24&d=mm';
+
+            var d = new Date(c.time);
+            
+            templ.content.querySelector('img#comment-avatar').src = url;
+
+            var atp = c.author.indexOf('@');
+            var author;
+
+            if (atp != -1) {
+                author = c.author.substring(0, atp);
+            } else {
+                author = c.author;
+            }
+
+            templ.content.querySelector('#comment-author').innerText = author;
+            templ.content.querySelector('#comment-date').innerText = this._date_for_display(d);
+            templ.content.querySelector('#comment-text').innerText = c.text;
+
+            var clone = document.importNode(templ.content, true);
+            hcomments.appendChild(clone);
+        }).bind(this));
+    } else {
+        var spinner = document.createElement('div');
+        spinner.classList.add('spinner');
+        spinner.classList.add('large');
+        hcomments.appendChild(spinner);
+
+        var s = new Spinner(spinner);
+        s.start();
+    }
+
+    hbug.style.display = "block";
 }
 
 App.prototype.on_search_filters = function(search) {
@@ -56,7 +174,7 @@ App.prototype.on_search_filters = function(search) {
 }
 
 App.prototype.on_search_bugs = function(search) {
-    this._update_bugs_list();
+    this._show_bugs_list();
 }
 
 App.prototype.on_filters_updated = function() {
@@ -137,26 +255,37 @@ App.prototype._render_bugs_list = function() {
         }
     }
 
+    var list = $$.query('#bugs_list');
+
     for (var i = 0; i < this._bugs.length; i++) {
         var bug = this._bugs[i];
         var date = this._date_for_display(new Date(bug.creation_time));
 
         rows += '\
-<tr class="' + bug.severity + '">\
-  <td><span class="severity">' + bug.severity.substring(0, 2) + '</span></td>\
+<tr class="' + html_escape(bug.severity) + '">\
+  <td><span class="severity">' + html_escape(bug.severity.substring(0, 2)) + '</span></td>\
   <td>';
 
         if (mt1) {
-            rows += '<span class="product">' + bug.product + '</span>'
+            rows += '<span class="product">' + html_escape(bug.product) + '</span>'
         }
 
-        rows += '<span class="summary">' + bug.summary + '</span></td>\
-  <td>' + date + '</td>\
+        rows += '<span class="summary" title="Bug ' + bug.id + '"><a href="/bug/' + bug.id + '">' + html_escape(bug.summary) + '</a></span></td>\
+  <td>' + html_escape(date) + '</td>\
 </tr>';
 
     }
 
-    $$.query('#bugs_list tbody').innerHTML = rows;
+    list.querySelector('tbody').innerHTML = rows;
+    list.querySelectorAll('a').each((function(a) {
+        a.addEventListener('click', (function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            history.pushState({}, null, e.target.href);
+            this._route();
+        }).bind(this));
+    }).bind(this));
 }
 
 App.prototype._bugs_union = function(a, b) {
@@ -384,7 +513,7 @@ App.prototype._on_filter_click = function(elem, filter) {
         elem.classList.add('selected');
     }
 
-    this._update_bugs_list();
+    this._show_bugs_list();
 }
 
 App.prototype._filter_before = function(filter) {
@@ -439,8 +568,8 @@ App.prototype._on_filter_star_click = function(elem, star, filter) {
 
         this._update_filters();
 
-        if (this._active_filter == null) {
-            this._update_bugs_list();
+        if (this._active_filter == null && this._bug == null) {
+            this._show_bugs_list();
         }
     }).bind(this));
 }

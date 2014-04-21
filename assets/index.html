@@ -7,6 +7,7 @@
     <script type="text/javascript" src="/assets/js/search.js"></script>
     <script type="text/javascript" src="/assets/js/query.js"></script>
     <script type="text/javascript" src="/assets/js/app.js"></script>
+    <script type="text/javascript" src="/assets/js/md5.js"></script>
     <script type="text/javascript" src="/assets/js/bugzini.js"></script>
 
     <link rel="stylesheet" href="/assets/css/bugzini.css" type="text/css" media="screen" />
@@ -53,6 +54,28 @@
           <tbody>
           </tbody>
         </table>
+        <div id="bug">
+          <div id="bug-header">
+          <div id="bug-info"><ul></ul></div>
+            <div id="bug-summary-container">
+              Bug <span id="bug-id">00000000</span> &mdash; <span id="bug-summary"></span>
+            </div>
+            
+          </div>
+          <div id="bug-comments">
+          </div>
+          <template id="bug-comment">
+            <div id="bug-comment">
+              <div id="comment-header">
+                <img id="comment-avatar" src=""/>
+                <div id="comment-author"></div>
+                <div id="comment-date"></div>
+              </div>
+              <div id="comment-text">
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </body>

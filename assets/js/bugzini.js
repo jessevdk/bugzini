@@ -1,3 +1,12 @@
+var escapeDiv = document.createElement('div');
+var escapeElement = document.createTextNode('');
+escapeDiv.appendChild(escapeElement);
+
+function html_escape(s) {
+    escapeElement.data = s;
+    return escapeDiv.innerHTML;
+}
+
 var Service = {
     get: function(url, options) {
         var req = new XMLHttpRequest();

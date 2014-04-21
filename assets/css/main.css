@@ -1,3 +1,8 @@
+body {
+  font-family: Helvetica, arial, freesans, clean, sans-serif;
+  font-size: 0.8em;
+}
+
 #content {
   margin-left: 280px;
   padding: 10px;
@@ -35,6 +40,7 @@
   margin: 0 auto;
   margin-top: 30px;
   font-size: 0.9em;
+  display: none;
 }
 
 #bugs_list th {
@@ -124,7 +130,7 @@
 }
 
 col.severity {
-  width: 16px;
+  width: 26px;
 }
 
 col.date {
@@ -133,6 +139,101 @@ col.date {
 
 col.id {
   width: 4em;
+}
+
+#bug {
+  display: none;
+  margin-top: 30px;
+}
+
+#bug-header {
+  margin-bottom: 15px;  
+}
+
+#bug-info ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+#bug-info ul li {
+  float: right;
+  margin-right: 3px;
+  border: 1px solid #aaa;
+  background-color: #f5f5f5;
+  padding: 3px;
+  border-radius: 3px;
+  font-size: 0.8em;
+}
+
+#bug-summary-container {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #268BD2;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+#bug-comment:first-of-type #comment-header {
+  border-radius: 6px 6px 0px 0px;
+}
+
+#comment-header {
+  background-color: #f7f7f7;
+  border: 1px solid #ddd;
+  padding: 6px;
+  border-radius: 6px 6px 0px 0px;
+}
+
+#comment-author {
+  font-size: 0.9em;
+}
+
+#comment-date {
+  color: #666;
+  font-size: 0.7em;
+}
+
+#comment-avatar {
+  float: left;
+  margin-right: 6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+}
+
+#comment-text {
+  border: 1px solid #ddd;
+  border-top: 0;
+  border-radius: 0px 0px 6px 6px;
+  padding: 12px;
+}
+
+#bug-comment {
+  width: 70%;
+  min-width: 300px;
+  margin: 0 auto;
+  margin-bottom: 10px;
+}
+
+#bug .spinner {
+  margin: 0 auto;
+  margin-top: 60px;
+}
+
+a {
+  color: #268BD2;
+  text-decoration: none;
+}
+
+#bugs_list a {
+  color: #000;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+#bugs_list a:hover {
+  color: #268BD2;
 }
 
 /* vi:ts=2:et */

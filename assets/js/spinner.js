@@ -5,6 +5,14 @@ var Spinner = function(elem) {
     this._animate_start = null;
     this.elem = elem;
 
+    if (elem.parentNode) {
+        elem.parentNode.addEventListener('DOMNodeRemoved', (function(e) {
+            if (e.target == elem) {
+                this.cancel();
+            }
+        }).bind(this));
+    }
+
     return this;
 }
 
@@ -39,8 +47,8 @@ Spinner.prototype.animate = function(stamp) {
     var fx = Math.floor(frame % 8);
     var fy = Math.floor(frame / 8);
 
-    this.elem.style.backgroundPositionX = (-16 * fx) + 'px';
-    this.elem.style.backgroundPositionY = (-16 * fy) + 'px';
+    this.elem.style.backgroundPositionX = (-100 * fx) + '%';
+    this.elem.style.backgroundPositionY = (-100 * fy) + '%';
 
     this.start();
 }

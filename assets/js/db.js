@@ -364,6 +364,7 @@ DB.prototype.ensure_bug = function(id, cb) {
                 }).bind(this)
             });
         } else {
+            cb(record);
             this._ensure_comments(record, cb);
         }
     }).bind(this));
