@@ -254,7 +254,7 @@ App.prototype._render_bugs_list = function() {
     }
 
     var found = $$.query('#search-bugs-found');
-    found.innerText = this._bugs.length + ' found matching criteria';
+    found.innerText = this._bugs.length + ' matches';
 
     var list = $$.query('#bugs_list');
 
