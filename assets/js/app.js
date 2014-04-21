@@ -93,20 +93,20 @@ App.prototype._show_bugs_list = function() {
 App.prototype._show_bug = function(id) {
     this._hide_bugs_list();
 
-    this.db.ensure_bug(id, (function(bug) {
+    this.db.ensure_bug(id, (function(bug, loading) {
         this._bug = bug;
-        this._render_bug();
+        this._render_bug(loading);
     }).bind(this));
 }
 
-App.prototype._render_bug = function() {
+App.prototype._render_bug = function(loading) {
     var hbug = $$.query('#bug');
 
     var hid = hbug.querySelector('#bug-id');
-    hid.innerText = this._bug.id;
+    hid.textContent = this._bug.id;
 
     var hsum = hbug.querySelector('#bug-summary');
-    hsum.innerText = this._bug.summary;
+    hsum.textContent = this._bug.summary;
 
     var templ = $$.query('template#bug-comment');
 
@@ -153,7 +153,9 @@ App.prototype._render_bug = function() {
             var clone = document.importNode(templ.content, true);
             hcomments.appendChild(clone);
         }).bind(this));
-    } else {
+    }
+
+    if (loading) {
         var spinner = document.createElement('div');
         spinner.classList.add('spinner');
         spinner.classList.add('large');
