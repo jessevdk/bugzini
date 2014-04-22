@@ -59,6 +59,10 @@
   margin: 1px;
 }
 
+#sidebar_items li.separator {
+  border-top: 1px solid #ccc;
+}
+
 #sidebar_items li.item {
   padding: 3px;
   margin-left: 6px;
