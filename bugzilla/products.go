@@ -127,7 +127,7 @@ func (p *Product) Bugs(conn *Conn) (*BugList, error) {
 	}
 
 	return conn.Bugs().SearchPage(map[string]interface{}{
-		"product": []string{p.Name},
+		"product":    []string{p.Name},
 		"resolution": "",
 	}, 300)
 }
@@ -138,8 +138,8 @@ func (p *Product) BugsAfter(conn *Conn, after time.Time) (*BugList, error) {
 	}
 
 	return conn.Bugs().SearchPage(map[string]interface{}{
-		"product": []string{p.Name},
+		"product":          []string{p.Name},
 		"last_change_time": after,
-		"resolution": "",
+		"resolution":       "",
 	}, 300)
 }

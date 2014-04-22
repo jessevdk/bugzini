@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bugzilla"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
-	"bugzilla"
 	"time"
 )
 
@@ -123,7 +123,7 @@ func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	if len(after) == 0 {
 		bug.Comments = comments
 	} else if len(bug.Comments) > 0 {
-		last := bug.Comments[len(bug.Comments) - 1]
+		last := bug.Comments[len(bug.Comments)-1]
 
 		for _, v := range comments {
 			if v.Time.After(last.Time) {

@@ -2,8 +2,8 @@ package bugzilla
 
 import (
 	"errors"
-	"time"
 	"fmt"
+	"time"
 )
 
 type Bug struct {
@@ -29,12 +29,12 @@ type Bug struct {
 }
 
 type Comment struct {
-	Id             int       `xmlrpc:"id" json:"id"`
-	BugId          int       `xmlrpc:"bug_id" json:"bug_id"`
-	AttachmentId   int       `xmlrpc:"attachment_id" json:"attachment_id"`
-	Text           string    `xmlrpc:"text" json:"text"`
-	Author         string    `xmlrpc:"author" json:"author"`
-	Time           time.Time `xmlrpc:"time" json:"time"`
+	Id           int       `xmlrpc:"id" json:"id"`
+	BugId        int       `xmlrpc:"bug_id" json:"bug_id"`
+	AttachmentId int       `xmlrpc:"attachment_id" json:"attachment_id"`
+	Text         string    `xmlrpc:"text" json:"text"`
+	Author       string    `xmlrpc:"author" json:"author"`
+	Time         time.Time `xmlrpc:"time" json:"time"`
 }
 
 type Attachment struct {
@@ -116,7 +116,7 @@ func (b Bugs) GetAllComments(conn *Conn, ids []int) ([]Comment, error) {
 	}
 
 	var ret struct {
-		Bugs map[string]struct{
+		Bugs map[string]struct {
 			Comments []Comment `xmlrpc:"comments"`
 		} `xmlrpc:"bugs"`
 	}
@@ -146,15 +146,15 @@ func (b Bugs) GetComments(conn *Conn, id int) ([]Comment, error) {
 
 func (b Bugs) GetCommentsAfter(conn *Conn, id int, after time.Time) ([]Comment, error) {
 	args := struct {
-		Ids []int `xmlrpc:"ids"`
+		Ids      []int     `xmlrpc:"ids"`
 		NewSince time.Time `xmlrpc:"new_since"`
 	}{
-		Ids: []int{id},
+		Ids:      []int{id},
 		NewSince: after,
 	}
 
 	var ret struct {
-		Bugs map[string]struct{
+		Bugs map[string]struct {
 			Comments []Comment `xmlrpc:"comments"`
 		} `xmlrpc:"bugs"`
 	}
@@ -221,4 +221,3 @@ func (b *BugList) Get(conn *Conn, i int) (*Bug, error) {
 	b.bugs[i].conn = conn
 	return &b.bugs[i], nil
 }
-

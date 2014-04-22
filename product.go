@@ -130,7 +130,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 				*b = *bug
 			} else {
 				cache.Bugs[id] = append(cache.Bugs[id], bug)
-				cache.bugsMap[bug.Id] = cache.Bugs[id][len(cache.Bugs[id]) - 1]
+				cache.bugsMap[bug.Id] = cache.Bugs[id][len(cache.Bugs[id])-1]
 			}
 		}
 

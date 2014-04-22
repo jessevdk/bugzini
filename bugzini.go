@@ -1,29 +1,29 @@
 package main
 
 import (
+	"bugzilla"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
 	"net"
 	"net/http"
-	"encoding/gob"
-	"bugzilla"
 	"os"
 )
 
 type Cache struct {
-	Products []bugzilla.Product
+	Products   []bugzilla.Product
 	ProductMap map[int]bugzilla.Product
-	Bugs map[int][]*bugzilla.Bug
+	Bugs       map[int][]*bugzilla.Bug
 
 	bugsMap map[int]*bugzilla.Bug
 }
 
 var cache = Cache{
-	Bugs: make(map[int][]*bugzilla.Bug),
+	Bugs:       make(map[int][]*bugzilla.Bug),
 	ProductMap: make(map[int]bugzilla.Product),
-	bugsMap: make(map[int]*bugzilla.Bug),
+	bugsMap:    make(map[int]*bugzilla.Bug),
 }
 
 func (c *Cache) Load() {
@@ -48,13 +48,12 @@ func (c *Cache) Save() {
 	}
 }
 
-
 var router = mux.NewRouter()
 
 var options struct {
-	Debug bool `short:"d" long:"debug" description:"Enable debug mode"`
+	Debug  bool `short:"d" long:"debug" description:"Enable debug mode"`
 	Launch bool `short:"l" long:"launch" description:"Launch browser at location"`
-	Port int `short:"p" long:"port" description:"Launch local webserver at specified port"`
+	Port   int  `short:"p" long:"port" description:"Launch local webserver at specified port"`
 
 	Bugzilla struct {
 		Host   string `long:"bz-host" description:"Bugzilla host (i.e. bugzilla.gnome.org)" default:"bugzilla.gnome.org"`
@@ -64,8 +63,8 @@ var options struct {
 
 func noCache(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate") // HTTP 1.1.
-	w.Header().Set("Pragma", "no-cache") // HTTP 1.0.
-	w.Header().Set("Expires", "0") // Proxies
+	w.Header().Set("Pragma", "no-cache")                                   // HTTP 1.0.
+	w.Header().Set("Expires", "0")                                         // Proxies
 }
 
 func SiteHandler(w http.ResponseWriter, r *http.Request) {
@@ -104,7 +103,7 @@ func main() {
 
 	bzaddr += options.Bugzilla.Host
 
-	router.Handle("/favicon.ico", http.RedirectHandler(bzaddr + "/favicon.ico", http.StatusTemporaryRedirect))
+	router.Handle("/favicon.ico", http.RedirectHandler(bzaddr+"/favicon.ico", http.StatusTemporaryRedirect))
 	router.PathPrefix("/assets/").Handler(http.FileServer(Assets))
 	router.PathPrefix("/").HandlerFunc(SiteHandler)
 
