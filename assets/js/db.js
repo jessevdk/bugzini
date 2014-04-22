@@ -10,8 +10,8 @@ var DB = function() {
     this.loaded = null;
 
     this.products = [];
-    this.product_id_to_product = {};
-    this.product_name_to_product = {};
+    this.product_id_to_filter = {};
+    this.product_name_to_filter = {};
 
     return this;
 }
@@ -80,13 +80,11 @@ DB.prototype.Store.prototype.put = function(item, cb) {
     var tr = this._db.db.transaction(this._name, 'readwrite');
     var store = tr.objectStore(this._name);
 
-    if (cb) {
-        tr.oncomplete = (function() {
-            cb();
-        }).bind(this);
+    var req = store.put(item);
+    
+    req.onsuccess = function() {
+        cb(req.result);
     }
-
-    store.put(item);
 }
 
 DB.prototype.Store.prototype.find = function(key, cb) {
@@ -204,7 +202,7 @@ DB.prototype.bugs = function() {
     return ret;
 }
 
-DB.prototype.open = function () {
+DB.prototype.open = function (e) {
     var req = indexedDB.open('bugzini', 1);
 
     req.onsuccess = this.open_success.bind(this);
@@ -239,7 +237,7 @@ DB.prototype.open_upgrade_needed = function(e) {
 }
 
 DB.prototype.upgrade_v1 = function() {
-    var filters = this.db.createObjectStore('filters', { keyPath: 'id' });
+    var filters = this.db.createObjectStore('filters', { keyPath: 'id', autoIncrement: true });
     filters.createIndex('starred', 'starred', { unique: false });
     filters.createIndex('is_product', 'is_product', { unique: false });
     filters.createIndex('name', 'name', { unique: false });
@@ -267,8 +265,8 @@ DB.prototype.init_filters = function(cb) {
             filters.each((function (filter) {
                 if (filter.is_product) {
                     this.products.push(filter);
-                    this.product_id_to_product[filter.id] = filter;
-                    this.product_name_to_product[filter.name.toLowerCase()] = filter;
+                    this.product_id_to_filter[filter.product_id] = filter;
+                    this.product_name_to_filter[filter.name.toLowerCase()] = filter;
                 }
             }).bind(this));
 
@@ -294,19 +292,22 @@ DB.prototype.init_filters_load = function() {
             }).bind(this);
 
             ret.each((function (product) {
-                this.product_id_to_product[product.id] = product;
-                this.product_name_to_product[product.name.toLowerCase()] = product;
-
                 var filter = {
                     description: product.description,
                     name: product.name,
-                    id: product.id,
                     query: 'product-id:' + product.id,
                     color: '#268BD2',
-                    is_product: true
+                    is_product: true,
+                    product_id: product.id,
                 }
 
-                store.put(filter);
+                var req = store.put(filter);
+                req.onsuccess = (function() {
+                    filter.id = req.result;
+                    
+                    this.product_id_to_filter[product.id] = filter;
+                    this.product_name_to_filter[product.name.toLowerCase()] = filter;
+                }).bind(this);
             }).bind(this));
         }).bind(this),
 
@@ -456,7 +457,7 @@ DB.prototype.ensure_bug = function(id, cb) {
     }).bind(this));
 }
 
-DB.prototype.update_product = function(id, cb) {
+DB.prototype.update_filter = function(id, cb) {
     this.filters().find(id, (function(record) {
         if (!record) {
             cb();
@@ -469,7 +470,7 @@ DB.prototype.update_product = function(id, cb) {
         store.cursor((function(cursor) {
             var bug = cursor.value;
 
-            Service.get('/product/' + id + '/bugs?after=' + bug.last_change_time / 1000, {
+            Service.get('/product/' + record.product_id + '/bugs?after=' + bug.last_change_time / 1000, {
                 success: (function(req, ret) {
                     for (var i = 0; i < ret.length; i++) {
                         ret[i].is_unread = 1;
@@ -478,6 +479,25 @@ DB.prototype.update_product = function(id, cb) {
                     this._process_bugs(id, ret, cb);
                 }).bind(this)
             });
+        }).bind(this));
+    }).bind(this));
+}
+
+DB.prototype.create_filter = function(name, query, cb) {
+    this.filters().index('name').find(name, (function(record) {
+        if (record) {
+            cb(false, 'A filter with the name \'' + name + '\' already exists');
+            return;
+        }
+
+        this.filters().put({
+            name: name,
+            description: '',
+            query: query,
+            is_product: false,
+        }, (function(id) {
+            cb(true);
+            this.on_filters_updated();
         }).bind(this));
     }).bind(this));
 }

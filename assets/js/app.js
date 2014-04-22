@@ -19,10 +19,11 @@ App.prototype.init = function() {
     this._refreshing = {};
     this._bug = null;
 
-    this.searches['search-filters'].on_update = this.on_search_filters.bind(this);
+    this.searches['search-filters'].input.on_update = this.on_search_filters.bind(this);
 
-    this.searches['search-bugs'].update_delay = 300;
-    this.searches['search-bugs'].on_update = this.on_search_bugs.bind(this);
+    this.searches['search-bugs'].input.update_delay = 300;
+    this.searches['search-bugs'].input.on_update = this.on_search_bugs.bind(this);
+    this.searches['search-bugs'].on_params = this.on_search_bugs_params.bind(this);
 
     var items = $$.query('#sidebar_items');
 
@@ -54,6 +55,60 @@ App.prototype.init = function() {
             this._route();
         }).bind(this));
     }).bind(this);
+}
+
+App.prototype.on_search_bugs_params = function(e) {
+    var templ = $$.query('#search-bugs-params-template');
+
+    var search = this.searches['search-bugs'];
+
+    var clone = document.importNode(templ.content, true);
+
+    var bname = clone.querySelector('input#bookmark-name');
+    var inp = new InteractiveInput(bname);
+
+    if (!search.value()) {
+        bname.disabled = "disabled";
+    } else {
+        bname.disabled = "";
+    }
+
+    var bookmark = clone.querySelector('input#bookmark');
+    bookmark.disabled = "disabled";
+
+    inp.on_update = function() {
+        if (inp.value()) {
+            bookmark.disabled = '';
+        } else {
+            bookmark.disabled = 'disabled';
+        }
+    }
+
+    var p = new Popover(clone, [e.clientX, e.clientY]);
+
+    inp.on_activate = (function() {
+        if (inp.value()) {
+            this._on_bookmark(inp.value());
+            p.close()
+        }
+    }).bind(this);
+
+    bookmark.addEventListener('click', (function () {
+        if (inp.value()) {
+            this._on_bookmark(inp.value());
+            p.close();
+        }
+    }).bind(this));
+}
+
+App.prototype._on_bookmark = function(val) {
+    this._full_query((function(q) {
+        this.db.create_filter(val, q, (function(v, err) {
+            if (!v) {
+                console.log(err);
+            }
+        }).bind(this));
+    }).bind(this));
 }
 
 App.prototype._route = function() {
@@ -274,18 +329,18 @@ App.prototype._required_products_from_query = function(query) {
 
     // Query for bugs of new products if necessary
     query.products.each((function (p) {
-        var product = this.db.product_name_to_product[p];
+        var filter = this.db.product_name_to_filter[p.toLowerCase()];
 
         if (product) {
-            products.push(product);
+            products.push(filter);
         }
     }).bind(this));
 
     query.product_ids.each((function (p) {
-        var product = this.db.product_id_to_product[p];
+        var filter = this.db.product_id_to_filter[p];
 
-        if (product) {
-            products.push(product);
+        if (filter) {
+            products.push(filter);
         }
     }).bind(this));
 
@@ -465,16 +520,16 @@ App.prototype._do_query_node = function(node, cb) {
         });
     } else if ('field' in node) {
         if (node.field == 'product' || node.field == 'product-id') {
-            var product;
+            var filter;
 
             if (node.field == 'product') {
-                product = this.db.product_name_to_product[node.value];
+                filter = this.db.product_name_to_filter[node.value.toLowerCase()];
             } else {
-                product = this.db.product_id_to_product[node.value];
+                filter = this.db.product_id_to_filter[node.value];
             }
 
-            if (product) {
-                this.db.bugs().index('product_open').only([product.name, 1]).all((function (bugs) {
+            if (filter) {
+                this.db.bugs().index('product_open').only([filter.name, 1]).all((function (bugs) {
                     var ret = {};
 
                     bugs.each(function(b) {
@@ -536,6 +591,19 @@ App.prototype._update_bugs_list_with_query = function(query) {
     }).bind(this));
 }
 
+App.prototype._full_query = function(cb) {
+    this._selected_filters((function(filters) {
+        var q = '!(' + filters.map(function(e) { return e.query; }).join(' ') + ')';
+        var s = this.searches['search-bugs'].value();
+
+        if (s) {
+            q += ' (' + s + ')';
+        }
+
+        cb(q);
+    }).bind(this));
+}
+
 App.prototype._update_bugs_list_with_filters = function(filters) {
     var q = '!(' + filters.map(function(e) { return e.query; }).join(' ') + ')';
     var s = this.searches['search-bugs'].value();
@@ -565,7 +633,7 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
             cb = this._render_refresh(elem, filter);
         }
 
-        this.db.ensure_product(product.id, (function(loading) {
+        this.db.ensure_product(product.product_id, (function(loading) {
             if (loading) {
                 if (!spinner) {
                     this._hide_bugs_list();
@@ -607,16 +675,17 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
     }).bind(this));
 }
 
-App.prototype._update_bugs_list = function() {
-    // Get all bugs according to the current filter + search terms
-    var filter = '';
-
+App.prototype._selected_filters = function(cb) {
     if (this._active_filter == null) {
         // Filter all starred
-        this.db.filters().index('starred').only(1).all(this._update_bugs_list_with_filters.bind(this));
+        this.db.filters().index('starred').only(1).all(cb);
     } else {
-        this._update_bugs_list_with_filters([this._active_filter]);
+        cb([this._active_filter]);
     }
+}
+
+App.prototype._update_bugs_list = function() {
+    this._selected_filters(this._update_bugs_list_with_filters.bind(this));
 }
 
 App.prototype._on_filter_click = function(elem, filter) {
@@ -719,6 +788,10 @@ App.prototype._render_refresh = function(elem, filter) {
 }
 
 App.prototype._on_filter_refresh_click = function(elem, refresh, filter) {
+    if (!filter.is_product) {
+        return;
+    }
+
     var isrefr = (filter.id in this._refreshing);
 
     var cb = this._render_refresh(elem, filter);
@@ -727,7 +800,7 @@ App.prototype._on_filter_refresh_click = function(elem, refresh, filter) {
         return;
     }
 
-    this.db.update_product(filter.id, (function() {
+    this.db.update_filter(filter.id, (function() {
         cb();
 
         this._update_bugs_list();
@@ -812,22 +885,26 @@ App.prototype._update_filters = function() {
             var refresh = n.querySelector('.refresh');
 
             if (refresh) {
-                refresh.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
+                if (!filter.is_product) {
+                    refresh.parentNode.removeChild(refresh);
+                } else {
+                    refresh.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
 
-                refresh.addEventListener('mousedown', (function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    refresh.addEventListener('mousedown', (function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
 
-                    if (!(filter.id in this._refreshing)) {
+                        if (!(filter.id in this._refreshing)) {
+                            this._on_filter_refresh_click.bind(this)(n, refresh, filter);
+                        }
+                    }).bind(this));
+
+                    if (filter.id in this._refreshing) {
                         this._on_filter_refresh_click.bind(this)(n, refresh, filter);
                     }
-                }).bind(this));
-
-                if (filter.id in this._refreshing) {
-                    this._on_filter_refresh_click.bind(this)(n, refresh, filter);
                 }
             }
         }
