@@ -80,6 +80,10 @@ DB.prototype.Store.prototype.put = function(item, cb) {
     var tr = this._db.db.transaction(this._name, 'readwrite');
     var store = tr.objectStore(this._name);
 
+    tr.oncomplete = function() {
+        cb();
+    }
+
     var req = store.put(item);
     
     req.onsuccess = function() {
@@ -496,8 +500,10 @@ DB.prototype.create_filter = function(name, query, cb) {
             query: query,
             is_product: false,
         }, (function(id) {
-            cb(true);
-            this.on_filters_updated();
+            if (!id) {
+                cb(true);
+                this.on_filters_updated();
+            }
         }).bind(this));
     }).bind(this));
 }
