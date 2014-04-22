@@ -24,7 +24,7 @@ App.prototype.init = function() {
     this.searches['search-bugs'].update_delay = 300;
     this.searches['search-bugs'].on_update = this.on_search_bugs.bind(this);
 
-    var items = $$.query('#sidebar_items')
+    var items = $$.query('#sidebar_items');
 
     items.addEventListener('DOMSubtreeModified', function (e) {
         if (items.scrollHeight > items.clientHeight) {
