@@ -115,4 +115,8 @@
   display: inline-block;
 }
 
+#sidebar_items .spinner {
+  margin: 0 auto;
+}
+
 /* vi:ts=2:et */

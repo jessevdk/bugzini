@@ -42,6 +42,7 @@ App.prototype.init = function() {
 
     this.db = new DB();
     this.db.on_filters_updated = this.on_filters_updated.bind(this);
+    this.db.on_filters_init = this.on_filters_init.bind(this);
 
     this._active_filter_elem = all_starred;
     this._active_filter = null;
@@ -223,10 +224,42 @@ App.prototype.on_search_bugs = function(search) {
     this._show_bugs_list();
 }
 
+App.prototype.on_filters_init = function() {
+    this._filter_loading = null;
+
+    this._filter_loading_tm = setTimeout((function() {
+        var items = $$.query('#sidebar_items');
+
+        var filters = items.querySelector('#filters');
+        filters.innerHTML = '';
+
+        this._filter_loading_tm = 0;
+
+        var spinner = document.createElement('div');
+        spinner.classList.add('spinner');
+        spinner.classList.add('medium');
+
+        items.appendChild(spinner);
+
+        this._filter_loading = new Spinner(spinner);
+        this._filter_loading.start();
+    }).bind(this), 300);
+}
+
 App.prototype.on_filters_updated = function() {
     this.db.filters().all((function(filters) {
         this._filters = filters;
         this._filter_map = {};
+
+        if (this._filter_loading_tm) {
+            clearTimeout(this._filter_loading_tm);
+            this._filter_loading_tm = 0;
+        }
+
+        if (this._filter_loading) {
+            this._filter_loading.cancel();
+            this._filter_loading = null;
+        }
 
         filters.each((function(f) {
             this._filter_map[f.id] = f;
@@ -521,6 +554,7 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
     }
 
     var nensure = products.length;
+    var spinner = null;
 
     products.each((function(product) {
         var elem = $$.query('#sidebar_items li[data-id="' + product.id + '"]');
@@ -531,7 +565,25 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
             cb = this._render_refresh(elem, filter);
         }
 
-        this.db.ensure_product(product.id, (function() {
+        this.db.ensure_product(product.id, (function(loading) {
+            if (loading) {
+                if (!spinner) {
+                    this._hide_bugs_list();
+
+                    var content = $$.query('#content');
+                    var sp = document.createElement('div');
+                    sp.classList.add('spinner');
+                    sp.classList.add('large');
+
+                    content.appendChild(sp);
+
+                    spinner = new Spinner(sp);
+                    spinner.start();
+                }
+
+                return;
+            }
+
             nensure--;
 
             if (cb) {
@@ -539,6 +591,16 @@ App.prototype._update_bugs_list_with_filters = function(filters) {
             }
 
             if (nensure == 0) {
+                if (spinner) {
+                    spinner.cancel();
+
+                    var content = $$.query('#content');
+                    content.removeChild(spinner.elem);
+
+                    var list = $$.query('#bugs_list');
+                    list.style.display = "table";
+                }
+
                 this._update_bugs_list_with_query(q);
             }
         }).bind(this));

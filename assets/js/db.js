@@ -5,6 +5,7 @@ var DB = function() {
 
     this._needs_init_filters = false;
     this.on_filters_updated = function () {};
+    this.on_filters_init = function () {};
     this.db = null;
     this.loaded = null;
 
@@ -258,6 +259,7 @@ DB.prototype.upgrade_v1 = function() {
 
 DB.prototype.init_filters = function(cb) {
     if (this._needs_init_filters) {
+        this.on_filters_init();
         this.init_filters_load();
         cb();
     } else {
@@ -356,6 +358,8 @@ DB.prototype.ensure_product = function(id, cb) {
         if (record) {
             cb();
         } else {
+            cb(true);
+
             Service.get('/product/' + id + '/bugs', {
                 success: (function(req, ret) {
                     this._process_bugs(id, ret, cb);
