@@ -12,6 +12,12 @@ var InteractiveInput = function(input) {
 
     this.on_update = function() {}
     this.on_activate = function() {}
+
+    this._lsid = 'interactive-input-' + this._input.id;
+
+    if (this._input.id && this._lsid in localStorage) {
+        this._input.value = localStorage[this._lsid];
+    }
 }
 
 InteractiveInput.prototype._on_change = function() {
@@ -20,6 +26,10 @@ InteractiveInput.prototype._on_change = function() {
     if (val != this._last_value) {
         this._last_value = val;
         this._emit_update(false);
+
+        if (this._input.id) {
+            localStorage[this._lsid] = val;
+        }
     }
 }
 
