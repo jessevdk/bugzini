@@ -928,6 +928,8 @@ App.prototype._update_filters = function() {
 
         if (filter.is_product) {
             html += '<div class="refresh loaded"></div>';
+        } else {
+            html += '<div class="delete"></div>';
         }
 
         html += '</li>'
@@ -966,27 +968,43 @@ App.prototype._update_filters = function() {
             var refresh = n.querySelector('.refresh');
 
             if (refresh) {
-                if (!filter.is_product) {
-                    refresh.parentNode.removeChild(refresh);
-                } else {
-                    refresh.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    });
+                refresh.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
 
-                    refresh.addEventListener('mousedown', (function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+                refresh.addEventListener('mousedown', (function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                        if (!(filter.id in this._refreshing)) {
-                            this._on_filter_refresh_click.bind(this)(n, refresh, filter);
-                        }
-                    }).bind(this));
-
-                    if (filter.id in this._refreshing) {
+                    if (!(filter.id in this._refreshing)) {
                         this._on_filter_refresh_click.bind(this)(n, refresh, filter);
                     }
+                }).bind(this));
+
+                if (filter.id in this._refreshing) {
+                    this._on_filter_refresh_click.bind(this)(n, refresh, filter);
                 }
+            }
+
+            var del = n.querySelector('.delete');
+
+            if (del) {
+                del.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                del.addEventListener('mousedown', (function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    this.db.delete_filter(filter.id, (function() {
+                        if (this._active_filter && this._active_filter.id == filter.id) {
+                            this._active_filter = null;
+                        }
+                    }).bind(this));
+                }).bind(this));
             }
         }
     }).bind(this));
