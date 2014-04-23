@@ -30,6 +30,7 @@
 
 .search input:focus {
   outline-style: none;
+  border: 0;
 }
 
 .search .close-icon {

@@ -13,10 +13,16 @@ type User struct {
 	EmailEnabled bool   `xmlrpc:"email_enabled" json:"email_enabled"`
 }
 
+var currentUser *User
+
 func (c *Conn) Users() Users {
 	return Users{
 		conn: c,
 	}
+}
+
+func CurrentUser() *User {
+	return currentUser
 }
 
 func (u Users) Login(user string, passwd string) (User, error) {
@@ -36,14 +42,26 @@ func (u Users) Login(user string, passwd string) (User, error) {
 		return User{}, err
 	}
 
-	return u.Get(ret.Id)
+	us, err := u.Get(ret.Id)
+
+	if err != nil {
+		return us, err
+	}
+
+	currentUser = &us
+	return us, err
 }
 
 func (u Users) Logout() error {
 	var ret struct{}
 	var args struct{}
 
-	return u.conn.Call("User.logout", args, &ret)
+	if err := u.conn.Call("User.logout", args, &ret); err != nil {
+		return err
+	}
+
+	currentUser = nil
+	return nil
 }
 
 func (u Users) Get(id int) (User, error) {

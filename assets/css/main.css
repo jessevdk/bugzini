@@ -292,4 +292,42 @@ a {
   border-radius: 0;
 }
 
+#user-bar {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: #f5f5f5;
+  padding: 6px;
+  border-radius: 0px 0px 0px 6px;
+  border: 1px solid #ccc;
+  border-right: 0;
+  border-top: 0;
+  display: none;
+}
+
+#user-bar.shown,
+#user-bar #login-bar.shown,
+#user-bar #logout-bar.shown {
+  display: block;
+}
+
+#login-bar {
+  display: none;
+}
+
+#logout-bar {
+  display: none;
+}
+
+input[type=text],
+input[type=password] {
+  border: 1px solid #aaa;
+}
+
+input[type=text]:focus,
+input[type=password]:focus {
+  outline-style: none;
+  border-color: #268BD2;
+}
+
 /* vi:ts=2:et */

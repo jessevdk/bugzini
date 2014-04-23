@@ -55,6 +55,87 @@ App.prototype.init = function() {
             this._route();
         }).bind(this));
     }).bind(this);
+
+    this._init_current_user();
+}
+
+App.prototype._show_user = function(user) {
+    var loginbar = $$.query('#user-bar #login-bar');
+    var logoutbar = $$.query('#user-bar #logout-bar');
+
+    var pi = loginbar.querySelector('input#password');
+    pi.value = '';
+
+    loginbar.classList.remove('shown');
+    logoutbar.classList.add('shown');
+
+    var name = logoutbar.querySelector('#user-name');
+    name.textContent = user.real_name;
+}
+
+App.prototype._hide_user = function() {
+    var loginbar = $$.query('#user-bar #login-bar');
+    var logoutbar = $$.query('#user-bar #logout-bar');
+
+    loginbar.classList.add('shown');
+    logoutbar.classList.remove('shown');
+
+    var name = logoutbar.querySelector('#user-name');
+    name.textContent = '';
+}
+
+App.prototype._init_current_user = function() {
+    var userbar = $$.query('#user-bar');
+    var loginbar = $$.query('#user-bar #login-bar');
+    var logoutbar = $$.query('#user-bar #logout-bar');
+
+    Service.get('/user/current', {
+        success: (function(req, ret) {
+            userbar.classList.add('shown');
+
+            this._show_user(ret);
+        }).bind(this),
+
+        error: function() {
+            userbar.classList.add('shown');
+            loginbar.classList.add('shown');
+        }
+    })
+
+    var ui = loginbar.querySelector('input#user');
+    var pi = loginbar.querySelector('input#password');
+
+    new InteractiveInput(ui);
+
+    loginbar.querySelector('input#login').addEventListener('click', (function() {
+        Service.post('/user/login', {
+            data: {
+                user: ui.value,
+                password: pi.value
+            },
+
+            success: (function(req, ret) {
+                loginbar.classList.remove('shown');
+                this._show_user(ret);
+            }).bind(this),
+
+            error: (function(req) {
+                console.log(req);
+            }).bind(this),
+        })
+    }).bind(this));
+
+    logoutbar.querySelector('input#logout').addEventListener('click', (function() {
+        Service.post('/user/logout', {
+            success: (function(req, ret) {
+                this._hide_user();
+            }).bind(this),
+
+            error: (function(req) {
+                console.log(req);
+            }).bind(this)
+        });
+    }).bind(this));
 }
 
 App.prototype.on_search_bugs_params = function(e) {

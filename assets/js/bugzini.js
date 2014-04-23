@@ -8,27 +8,58 @@ function html_escape(s) {
 }
 
 var Service = {
-    get: function(url, options) {
+    ajax: function(method, url, options) {
         var req = new XMLHttpRequest();
 
-        req.open('GET', '/api' + url, true);
+        req.open(method, '/api' + url, true);
+        var fd = null;
+
+        if (options.data) {
+            fd = new FormData();
+
+            for (var k in options.data) {
+                fd.append(k, options.data[k]);
+            }
+        }
 
         req.onload = function(e) {
-            var ret = req.responseText;
-            var json = JSON.parse(ret);
+            if (req.status != 200) {
+                if (options.error) {
+                    options.error(req);
+                }
+            } else {
+                var ret = req.responseText;
+                var json = null;
 
-            options.success(req, json);
+                if (ret) {
+                    json = JSON.parse(ret);
+                }
+
+                options.success(req, json);
+            }
         };
 
         req.onerror = function(e) {
-            options.error(req);
+            if (options.error) {
+                options.error(req);
+            }
         };
 
         req.onabort = function(e) {
-            options.error(req);
+            if (options.error) {
+                options.error(req);
+            }
         };
 
-        req.send();
+        req.send(fd);
+    },
+
+    get: function(url, options) {
+        Service.ajax('GET', url, options);
+    },
+
+    post: function(url, options) {
+        Service.ajax('POST', url, options);
     }
 };
 
