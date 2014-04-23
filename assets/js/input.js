@@ -46,7 +46,7 @@ InteractiveInput.prototype._on_keydown = function(e) {
 InteractiveInput.prototype.value = function(val) {
     if (typeof val !== 'undefined') {
         this._input.value = val;
-        this._emit_update();
+        this._on_change();
     } else {
         return this._input.value;
     }
