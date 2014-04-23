@@ -91,6 +91,17 @@ DB.prototype.Store.prototype.put = function(item, cb) {
     }
 }
 
+DB.prototype.Store.prototype.delete = function(id, cb) {
+    var tr = this._db.db.transaction(this._name, 'readwrite');
+    var store = tr.objectStore(this._name);
+
+    tr.oncomplete = function() {
+        cb();
+    }
+
+    store.delete(id);
+}
+
 DB.prototype.Store.prototype.find = function(key, cb) {
     var tr = this._db.db.transaction(this._name);
     var store = tr.objectStore(this._name);
@@ -505,6 +516,13 @@ DB.prototype.create_filter = function(name, query, cb) {
                 this.on_filters_updated();
             }
         }).bind(this));
+    }).bind(this));
+}
+
+DB.prototype.delete_filter = function(id, cb) {
+    this.filters().delete(id, (function() {
+        cb();
+        this.on_filters_updated();
     }).bind(this));
 }
 
