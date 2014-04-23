@@ -282,7 +282,7 @@ App.prototype._render_bug = function(loading) {
             var url = 'http://www.gravatar.com/avatar/' + h + '?s=24&d=mm';
 
             var d = new Date(c.time);
-            
+
             templ.content.querySelector('img#comment-avatar').src = url;
 
             var cm = templ.content.querySelector('#bug-comment');
@@ -847,7 +847,7 @@ App.prototype._render_refresh = function(elem, filter) {
 
     refresh.classList.add('spinner');
     refresh.classList.remove('loaded');
-    
+
     var spinner = new Spinner(refresh);
     spinner.start();
 

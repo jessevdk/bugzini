@@ -13,7 +13,7 @@ var Search = function(elem) {
 
     input.addEventListener('focus', this._on_focus.bind(this));
     input.addEventListener('blur', this._on_blur.bind(this));
-    
+
     this._close.addEventListener('mousedown', this._on_close.bind(this));
     this._params.addEventListener('mousedown', this._on_params.bind(this));
 

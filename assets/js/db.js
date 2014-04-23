@@ -85,7 +85,7 @@ DB.prototype.Store.prototype.put = function(item, cb) {
     }
 
     var req = store.put(item);
-    
+
     req.onsuccess = function() {
         cb(req.result);
     }
@@ -308,7 +308,7 @@ DB.prototype.init_filters_load = function() {
                 var req = store.put(filter);
                 req.onsuccess = (function() {
                     filter.id = req.result;
-                    
+
                     this.product_id_to_filter[product.id] = filter;
                     this.product_name_to_filter[product.name.toLowerCase()] = filter;
                 }).bind(this);

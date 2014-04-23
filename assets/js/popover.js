@@ -51,7 +51,7 @@ Popover.prototype.close = function() {
 	var body = document.body;
 
 	body.classList.remove('modal');
-	
+
 	body.removeChild(this._overlay);
 	body.removeChild(this._popover);
 
