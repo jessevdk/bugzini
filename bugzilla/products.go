@@ -139,7 +139,7 @@ func (p *Product) BugsAfter(conn *Conn, after time.Time) (*BugList, error) {
 
 	return conn.Bugs().SearchPage(map[string]interface{}{
 		"product":          []string{p.Name},
-		"last_change_time": after,
+		"last_change_time": after.UTC(),
 		"resolution":       "",
 	}, 300)
 }

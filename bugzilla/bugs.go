@@ -170,7 +170,7 @@ func (b Bugs) GetCommentsAfter(conn *Conn, id int, after time.Time) ([]Comment, 
 		NewSince time.Time `xmlrpc:"new_since"`
 	}{
 		Ids:      []int{id},
-		NewSince: after,
+		NewSince: after.UTC(),
 	}
 
 	var ret struct {
