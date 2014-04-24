@@ -43,7 +43,9 @@ construction of `AND` type queries. For example, to look for all bugs containing
 a severity of `critical` or `major`, use: `!(severity:critical severity:major) crash`
 
 Note that search will only look at locally stored bug reports and only in the products selected
-in the sidebar.
+in the sidebar. Furthermore, search does not look at comments in bug reports for the simple reason
+that bug comments are only retrieved (and stored) from the remote bugzilla once a bug report
+is opened.
 
 ## Starring
 Projects can be starred by clicking on the star on the left of the project name. Starred projects
