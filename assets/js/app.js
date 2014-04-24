@@ -66,9 +66,9 @@ App.prototype.init = function() {
 }
 
 App.prototype._add_comment = function() {
-    var comment = $$.query('#bug-actions textarea').value;
+    var comment = $$.query('#bug-actions textarea');
 
-    if (!comment) {
+    if (!comment.value) {
         return;
     }
 
@@ -76,11 +76,12 @@ App.prototype._add_comment = function() {
 
     Service.post('/bug/' + this._bug.id + '/comment', {
         data: {
-            comment: comment
+            comment: comment.value
         },
 
         success: (function(req, ret) {
-            this._show_bug(this._bug.id);
+            this._show_bug(this._bug.id, true);
+            comment.value = '';
         }).bind(this)
     });
 }
