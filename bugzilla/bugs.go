@@ -110,10 +110,10 @@ func (b Bugs) Get(conn *Conn, id int) (Bug, error) {
 
 func (b Bugs) AddComment(conn *Conn, id int, comment string) (int, error) {
 	args := struct {
-		Id int `xmlrpc:"id"`
+		Id      int    `xmlrpc:"id"`
 		Comment string `xmlrpc:"comment"`
-	} {
-		Id: id,
+	}{
+		Id:      id,
 		Comment: comment,
 	}
 
