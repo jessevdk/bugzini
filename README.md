@@ -65,3 +65,8 @@ After the initial load of bug reports for a product, subsequent visits will only
 stored bugs. Synchronization of reports for a product is currently triggered manually by the user
 by clicking on the refresh icon on the right of a product name (in the sidebar). This might change
 in the future to a more automatic, periodic synchronization.
+
+Similar to e-mail, bugzini keeps track of which bug reports have had changes since the last time
+you synchronized. New reports and modified reports are marked such that it easy to see which
+reports contain new information since your last visit. Once a report is opened, it is marked
+as read and. Note that the initial load marks all bugs as read.
