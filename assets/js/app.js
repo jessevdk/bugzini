@@ -264,10 +264,10 @@ App.prototype._show_bugs_list = function() {
     this._update_bugs_list();
 }
 
-App.prototype._show_bug = function(id) {
+App.prototype._show_bug = function(id, force) {
     this._hide_bugs_list();
 
-    this.db.ensure_bug(id, (function(bug, loading) {
+    this.db.ensure_bug(id, force, (function(bug, loading) {
         this._bug = bug;
         this._render_bug(loading);
 

@@ -442,12 +442,12 @@ DB.prototype._mark_read = function(bug, val) {
     }
 }
 
-DB.prototype.ensure_bug = function(id, cb) {
+DB.prototype.ensure_bug = function(id, force, cb) {
     var store = this.bugs();
 
     store.find(id, (function(record) {
         if (record && record.comments && record.comments.length > 0) {
-            if (record.is_unread) {
+            if (record.is_unread || force) {
                 cb(record, true);
                 this._ensure_comments(record, cb);
             } else {
