@@ -108,6 +108,26 @@ func (b Bugs) Get(conn *Conn, id int) (Bug, error) {
 	return ret[0], nil
 }
 
+func (b Bugs) AddComment(conn *Conn, id int, comment string) (int, error) {
+	args := struct {
+		Id int `xmlrpc:"id"`
+		Comment string `xmlrpc:"comment"`
+	} {
+		Id: id,
+		Comment: comment,
+	}
+
+	var ret struct {
+		Id int `xmlrpc:"id"`
+	}
+
+	if err := conn.Call("Bug.add_comment", args, &ret); err != nil {
+		return 0, err
+	}
+
+	return ret.Id, nil
+}
+
 func (b Bugs) GetAllComments(conn *Conn, ids []int) ([]Comment, error) {
 	args := struct {
 		Ids []int `xmlrpc:"ids"`

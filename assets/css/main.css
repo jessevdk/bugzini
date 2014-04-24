@@ -220,11 +220,34 @@ col.id {
   padding-bottom: 18px;
 }
 
-#bug-comment {
+#bug-actions {
+  display: none;
+}
+
+#bug-actions.shown {
+  display: block;
+}
+
+#bug-actions #comment-text {
+  white-space: normal;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+#bug-actions .buttons {
+  text-align: right;
+}
+
+#bug-comment,
+#bug-actions {
   width: 70%;
   min-width: 300px;
   margin: 0 auto;
   margin-bottom: 10px;
+}
+
+#bug-actions textarea {
+  width: 100%;
 }
 
 #content .spinner {

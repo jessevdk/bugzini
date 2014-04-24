@@ -18,6 +18,7 @@ App.prototype.init = function() {
     this._bugs = [];
     this._refreshing = {};
     this._bug = null;
+    this._user = null;
 
     this.searches['search-filters'].input.on_update = this.on_search_filters.bind(this);
 
@@ -56,7 +57,32 @@ App.prototype.init = function() {
         }).bind(this));
     }).bind(this);
 
+    var comment = $$.query('#add-comment');
+    comment.addEventListener('click', (function() {
+        this._add_comment();
+    }).bind(this));
+
     this._init_current_user();
+}
+
+App.prototype._add_comment = function() {
+    var comment = $$.query('#bug-actions textarea').value;
+
+    if (!comment) {
+        return;
+    }
+
+    this._render_bug(true);
+
+    Service.post('/bug/' + this._bug.id + '/comment', {
+        data: {
+            comment: comment
+        },
+
+        success: (function(req, ret) {
+            this._show_bug(this._bug.id);
+        }).bind(this)
+    });
 }
 
 App.prototype._show_user = function(user) {
@@ -71,6 +97,9 @@ App.prototype._show_user = function(user) {
 
     var name = logoutbar.querySelector('#user-name');
     name.textContent = user.real_name;
+
+    this._user = user;
+    this._show_add_comment();
 }
 
 App.prototype._hide_user = function() {
@@ -82,6 +111,9 @@ App.prototype._hide_user = function() {
 
     var name = logoutbar.querySelector('#user-name');
     name.textContent = '';
+
+    this._user = null;
+    this._hide_add_comment();
 }
 
 App.prototype._init_current_user = function() {
@@ -209,6 +241,11 @@ App.prototype._hide_bugs_list = function() {
     list.elem.style.display = '';
 }
 
+App.prototype._bug_visible = function() {
+    var bug = new $($$.query('#bug'));
+    return bug.elem.style.display != '';
+}
+
 App.prototype._hide_bug = function() {
     var bug = new $($$.query('#bug'));
     bug.elem.style.display = '';
@@ -236,6 +273,37 @@ App.prototype._show_bug = function(id) {
 
         return true;
     }).bind(this));
+}
+
+App.prototype._hide_add_comment = function() {
+    var actions = $$.query('#bug-actions');
+    actions.classList.remove('shown');
+}
+
+App.prototype._show_add_comment = function() {
+    if (!this._user || !this._bug || !this._bug_visible()) {
+        return;
+    }
+
+    var actions = $$.query('#bug-actions');
+
+    if (!actions.classList.contains('shown')) {
+        actions.classList.add('shown');
+    }
+
+    var h = md5(this._user.email);
+    var url = 'http://www.gravatar.com/avatar/' + h + '?s=24&d=mm';
+
+    actions.querySelector('#comment-avatar').src = url;
+    actions.querySelector('#comment-author').textContent = this._user.real_name;
+}
+
+App.prototype._hide_show_add_comment = function() {
+    if (this._user) {
+        this._show_add_comment();
+    } else {
+        this._hide_add_comment();
+    }
 }
 
 App.prototype._render_bug = function(loading) {
@@ -338,6 +406,8 @@ App.prototype._render_bug = function(loading) {
         });
     });
 
+    hbug.style.display = "block";
+
     if (loading) {
         var spinner = document.createElement('div');
         spinner.classList.add('spinner');
@@ -346,9 +416,11 @@ App.prototype._render_bug = function(loading) {
 
         var s = new Spinner(spinner);
         s.start();
-    }
 
-    hbug.style.display = "block";
+        this._hide_add_comment();
+    } else {
+        this._hide_show_add_comment();
+    }
 }
 
 App.prototype.on_search_filters = function(search) {

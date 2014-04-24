@@ -487,11 +487,16 @@ DB.prototype.update_filter = function(id, cb) {
 
             Service.get('/product/' + record.product_id + '/bugs?after=' + bug.last_change_time / 1000, {
                 success: (function(req, ret) {
+                    var newer = [];
+
                     for (var i = 0; i < ret.length; i++) {
-                        ret[i].is_unread = 1;
+                        if (ret[i].last_change_time > bug.last_change_time) {
+                            ret[i].is_unread = 1;
+                            newer.push(ret[i]);
+                        }
                     }
 
-                    this._process_bugs(id, ret, cb);
+                    this._process_bugs(id, newer, cb);
                 }).bind(this)
             });
         }).bind(this));
