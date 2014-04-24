@@ -490,7 +490,7 @@ DB.prototype.update_filter = function(id, cb) {
                     var newer = [];
 
                     for (var i = 0; i < ret.length; i++) {
-                        if (ret[i].last_change_time > bug.last_change_time) {
+                        if (Date.parse(ret[i].last_change_time) > bug.last_change_time) {
                             ret[i].is_unread = 1;
                             newer.push(ret[i]);
                         }
