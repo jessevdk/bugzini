@@ -513,7 +513,7 @@ App.prototype._date_for_display = function(date) {
         [-1, 'year', 'years']
     ];
 
-    var difft = (now.getTime() / 1000) - (date.getTime() / 1000);
+    var difft = Math.floor((now.getTime() / 1000) - (date.getTime() / 1000));
 
     for (var i = 0; i < parts.length; i++) {
         var p = parts[i];
