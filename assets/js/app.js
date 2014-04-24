@@ -313,6 +313,9 @@ App.prototype._render_bug = function(loading) {
     var hid = hbug.querySelector('#bug-id');
     hid.textContent = this._bug.id;
 
+    var link = hbug.querySelector('#bug-bugzilla-link');
+    link.href = '/bug/' + this._bug.id + '/original';
+
     var hsum = hbug.querySelector('#bug-summary');
     hsum.textContent = this._bug.summary;
 

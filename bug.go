@@ -55,6 +55,23 @@ func BugHandler(w http.ResponseWriter, r *http.Request) {
 	JsonResponse(w, *bug)
 }
 
+func BugOriginalHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
+	vars := mux.Vars(r)
+
+	var url string
+
+	if options.Bugzilla.Secure {
+		url = "https://"
+	} else {
+		url = "http://"
+	}
+
+	url += options.Bugzilla.Host + "/show_bug.cgi?id=" + vars["id"]
+	http.Redirect(w, r, url, http.StatusMovedPermanently)
+}
+
 func BugCommentHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
 
@@ -178,5 +195,6 @@ func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 	router.HandleFunc("/api/bug/{id:[0-9]+}/comments", BugCommentsHandler)
 	router.HandleFunc("/api/bug/{id:[0-9]+}/comment", BugCommentHandler)
+	router.HandleFunc("/bug/{id:[0-9]+}/original", BugOriginalHandler)
 	router.HandleFunc("/api/bug/{id:[0-9]+}", BugHandler)
 }
