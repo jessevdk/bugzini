@@ -36,8 +36,12 @@ InteractiveInput.prototype._on_change = function() {
 InteractiveInput.prototype._on_keydown = function(e) {
     if (e.which == 27) {
         this.cancel();
+        e.preventDefault();
+        e.stopPropagation();
     } else if (e.which == 13) {
         this.on_activate();
+        e.preventDefault();
+        e.stopPropagation();
     } else {
         this._on_change();
     }
