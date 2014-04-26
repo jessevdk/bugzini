@@ -901,10 +901,6 @@ App.prototype._on_filter_star_click = function(elem, star, filter) {
             star.classList.add('non-starred');
         }
 
-        // Slide out/in newly sorted
-        var parent = elem.parentNode;
-        parent.removeChild(elem);
-
         var before = this._filter_before(filter);
 
         this._filters.splice(before.index, 1);
