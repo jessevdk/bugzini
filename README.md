@@ -4,8 +4,8 @@ with a primary focus on fast and easy searching and reading of bug reports.
 # Installation
 bugzini is a self-contained webservice which serves a simple web application in the
 local browser. The only build dependency of bugzini is `go`, so make sure you have it
-installed first. Then, simply type `make` to make the self-contained `bugzini` application,
-containing the webservice and all required resources bundled inside.
+installed first (at least version 1.1). Then, simply type `make` to make the self-contained
+`bugzini` application, containing the webservice and all required resources bundled inside.
 
 # Running
 bugzini uses the XML-RPC API of bugzilla, and is currently only tested with the GNOME
