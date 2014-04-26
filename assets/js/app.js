@@ -21,6 +21,7 @@ App.prototype.init = function() {
     this._user = null;
 
     this.searches['search-filters'].input.on_update = this.on_search_filters.bind(this);
+    this._search_filter = this.searches['search-filters'].input.value();
 
     this.searches['search-bugs'].input.update_delay = 300;
     this.searches['search-bugs'].input.on_update = this.on_search_bugs.bind(this);
