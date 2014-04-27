@@ -43,12 +43,29 @@ App.prototype.init = function() {
         this._on_filter_click.bind(this)(all_starred);
     }).bind(this));
 
-    this.db = new DB();
-    this.db.on_filters_updated = this.on_filters_updated.bind(this);
-    this.db.on_filters_init = this.on_filters_init.bind(this);
-
     this._active_filter_elem = all_starred;
     this._active_filter = null;
+
+    var comment = $$.query('#add-comment');
+    comment.addEventListener('click', (function() {
+        this._add_comment();
+    }).bind(this));
+
+    this._init_current_user();
+
+    Service.get('/info', {
+        success: (function(req, ret) {
+            this._got_info(ret);
+        }).bind(this)
+    });
+}
+
+App.prototype._got_info = function(info) {
+    this._info = info;
+
+    this.db = new DB(info.host);
+    this.db.on_filters_updated = this.on_filters_updated.bind(this);
+    this.db.on_filters_init = this.on_filters_init.bind(this);
 
     this.db.loaded = (function() {
         this._route();
@@ -57,13 +74,6 @@ App.prototype.init = function() {
             this._route();
         }).bind(this));
     }).bind(this);
-
-    var comment = $$.query('#add-comment');
-    comment.addEventListener('click', (function() {
-        this._add_comment();
-    }).bind(this));
-
-    this._init_current_user();
 }
 
 App.prototype._add_comment = function() {

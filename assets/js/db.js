@@ -1,6 +1,6 @@
-var DB = function() {
-    //var req = indexedDB.deleteDatabase('bugzini');
-    //req.onsuccess = this.open.bind(this);
+var DB = function(host) {
+    this._host = host;
+
     this.open();
 
     this._needs_init_filters = false;
@@ -218,7 +218,7 @@ DB.prototype.bugs = function() {
 }
 
 DB.prototype.open = function (e) {
-    var req = indexedDB.open('bugzini', 1);
+    var req = indexedDB.open('bugzini:' + this._host, 1);
 
     req.onsuccess = this.open_success.bind(this);
     req.onerror = this.open_error.bind(this);

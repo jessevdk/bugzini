@@ -29,7 +29,7 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := int(idv)
 
-	if product, ok := cache.ProductMap[id]; ok {
+	if product, ok := cache.c.ProductMap[id]; ok {
 		JsonResponse(w, product)
 		return
 	}
@@ -41,7 +41,7 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cache.ProductMap[id] = product
+	cache.c.ProductMap[id] = product
 	cache.Save()
 
 	JsonResponse(w, product)
@@ -68,7 +68,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, ok := cache.ProductMap[id]
+	product, ok := cache.c.ProductMap[id]
 
 	if !ok {
 		product, err = client.Products().Get(client, id)
@@ -78,7 +78,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		cache.ProductMap[id] = product
+		cache.c.ProductMap[id] = product
 		cache.Save()
 	}
 
@@ -86,7 +86,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Only use cache if not asking for bugs after a certain date
 	if len(after) == 0 {
-		if bugs, ok := cache.Bugs[id]; ok {
+		if bugs, ok := cache.c.Bugs[id]; ok {
 			JsonResponse(w, bugs)
 			return
 		}
@@ -126,11 +126,11 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 		pbugs = append(pbugs, bug)
 
 		if len(after) != 0 {
-			if b, ok := cache.bugsMap[bug.Id]; ok {
+			if b, ok := cache.c.bugsMap[bug.Id]; ok {
 				*b = *bug
 			} else {
-				cache.Bugs[id] = append(cache.Bugs[id], bug)
-				cache.bugsMap[bug.Id] = cache.Bugs[id][len(cache.Bugs[id])-1]
+				cache.c.Bugs[id] = append(cache.c.Bugs[id], bug)
+				cache.c.bugsMap[bug.Id] = cache.c.Bugs[id][len(cache.c.Bugs[id])-1]
 			}
 		}
 
@@ -138,7 +138,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(after) == 0 {
-		cache.Bugs[id] = pbugs
+		cache.c.Bugs[id] = pbugs
 	}
 
 	cache.Save()
@@ -149,8 +149,8 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
 
-	if cache.Products != nil {
-		JsonResponse(w, cache.Products)
+	if cache.c.Products != nil {
+		JsonResponse(w, cache.c.Products)
 		return
 	}
 
@@ -181,10 +181,10 @@ func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
 		ret = append(ret, p)
 	}
 
-	cache.Products = ret
+	cache.c.Products = ret
 
 	for _, p := range ret {
-		cache.ProductMap[p.Id] = p
+		cache.c.ProductMap[p.Id] = p
 	}
 
 	cache.Save()

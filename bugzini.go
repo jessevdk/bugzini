@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bugzilla"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -12,41 +10,7 @@ import (
 	"os"
 )
 
-type Cache struct {
-	Products   []bugzilla.Product
-	ProductMap map[int]bugzilla.Product
-	Bugs       map[int][]*bugzilla.Bug
-
-	bugsMap map[int]*bugzilla.Bug
-}
-
-var cache = Cache{
-	Bugs:       make(map[int][]*bugzilla.Bug),
-	ProductMap: make(map[int]bugzilla.Product),
-	bugsMap:    make(map[int]*bugzilla.Bug),
-}
-
-func (c *Cache) Load() {
-	if f, err := os.Open(".cache"); err == nil {
-		dec := gob.NewDecoder(f)
-		dec.Decode(c)
-		f.Close()
-
-		for _, v := range c.Bugs {
-			for _, bug := range v {
-				c.bugsMap[bug.Id] = bug
-			}
-		}
-	}
-}
-
-func (c *Cache) Save() {
-	if f, err := os.Create(".cache"); err == nil {
-		enc := gob.NewEncoder(f)
-		enc.Encode(c)
-		f.Close()
-	}
-}
+const BugziniVersion = 1
 
 var router = mux.NewRouter()
 
@@ -70,6 +34,22 @@ func noCache(w http.ResponseWriter) {
 func SiteHandler(w http.ResponseWriter, r *http.Request) {
 	r.URL.Path = "/assets/"
 	router.ServeHTTP(w, r)
+}
+
+func InfoHandler(w http.ResponseWriter, r *http.Request) {
+	noCache(w)
+
+	info := struct {
+		Version int    `json:"version"`
+		Host    string `json:"host"`
+		Secure  bool   `json:"secure"`
+	}{
+		Version: BugziniVersion,
+		Host:    options.Bugzilla.Host,
+		Secure:  options.Bugzilla.Secure,
+	}
+
+	JsonResponse(w, info)
 }
 
 func JsonResponse(w http.ResponseWriter, data interface{}) {
@@ -104,6 +84,8 @@ func main() {
 	bzaddr += options.Bugzilla.Host
 
 	router.Handle("/favicon.ico", http.RedirectHandler(bzaddr+"/favicon.ico", http.StatusTemporaryRedirect))
+	router.HandleFunc("/api/info", InfoHandler)
+
 	router.PathPrefix("/assets/").Handler(http.FileServer(Assets))
 	router.PathPrefix("/").HandlerFunc(SiteHandler)
 

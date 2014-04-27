@@ -9,7 +9,7 @@ import (
 )
 
 func BugGet(id int) (*bugzilla.Bug, error) {
-	if bug, ok := cache.bugsMap[id]; ok {
+	if bug, ok := cache.c.bugsMap[id]; ok {
 		return bug, nil
 	}
 
@@ -25,7 +25,7 @@ func BugGet(id int) (*bugzilla.Bug, error) {
 		return nil, err
 	}
 
-	cache.bugsMap[bug.Id] = &bug
+	cache.c.bugsMap[bug.Id] = &bug
 	cache.Save()
 
 	return &bug, nil
