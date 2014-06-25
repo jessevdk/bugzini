@@ -37,7 +37,7 @@ func newCacheItem() *CacheItem {
 	}
 }
 
-func (c *Cache) readHeader(r io.Reader) (int, error) {
+func (c *Cache) readHeader(r io.Reader) (uint32, error) {
 	bs := make([]byte, len(CacheHeader))
 
 	if _, err := r.Read(bs); err != nil {
@@ -48,7 +48,7 @@ func (c *Cache) readHeader(r io.Reader) (int, error) {
 		return 0, fmt.Errorf("Invalid cache header")
 	}
 
-	var version int
+	var version uint32
 	if err := binary.Read(r, binary.LittleEndian, &version); err != nil {
 		return 0, err
 	}
@@ -61,8 +61,8 @@ func (c *Cache) writeHeader(w io.Writer) error {
 		return err
 	}
 
-	var version int
-	version = int(BugziniVersion)
+	var version uint32
+	version = BugziniVersion
 
 	if err := binary.Write(w, binary.LittleEndian, version); err != nil {
 		return err
@@ -77,7 +77,7 @@ func (c *Cache) Load() {
 
 		version, err := c.readHeader(f)
 
-		if err != nil && version == BugziniVersion {
+		if err == nil && version == BugziniVersion {
 			dec := gob.NewDecoder(f)
 
 			if err := dec.Decode(c); err != nil {

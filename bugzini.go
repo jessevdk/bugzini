@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-const BugziniVersion = 1
+const BugziniVersion = uint32(1)
 
 var router = mux.NewRouter()
 
@@ -40,7 +40,7 @@ func InfoHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
 
 	info := struct {
-		Version int    `json:"version"`
+		Version uint32 `json:"version"`
 		Host    string `json:"host"`
 		Secure  bool   `json:"secure"`
 	}{
