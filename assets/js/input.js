@@ -17,6 +17,7 @@ var InteractiveInput = function(input) {
 
     if (this._input.id && this._lsid in localStorage) {
         this._input.value = localStorage[this._lsid];
+        this._last_value = this._input.value;
     }
 }
 
