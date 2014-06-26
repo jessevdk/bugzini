@@ -85,6 +85,8 @@ func (c *Cache) Load() {
 			}
 
 			for _, h := range c.Hosts {
+				h.bugsMap = make(map[int]*bugzilla.Bug)
+
 				for _, v := range h.Bugs {
 					for _, bug := range v {
 						h.bugsMap[bug.Id] = bug
