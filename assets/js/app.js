@@ -413,7 +413,7 @@ App.prototype._render_bug = function(loading) {
                 uri = "https://bugzilla.gnome.org/attachment.cgi?" + attachmentid;
                 ncontent = content.replace(
                     /Created an attachment \(id=\d+/,
-                    "Created an attachment \(<a href='" + uri + "''>" + attachmentid + "</a>"
+                    'Created an attachment (<a href="' + uri + '">' + attachmentid + '</a>'
                   );
                 templ.content.querySelector('#comment-text').innerHTML = ncontent;
             }
