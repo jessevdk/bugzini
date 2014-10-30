@@ -406,6 +406,18 @@ App.prototype._render_bug = function(loading) {
             templ.content.querySelector('#comment-date').textContent = this._date_for_display(d);
             templ.content.querySelector('#comment-text').textContent = c.text;
 
+            attachment = c.text.match(/Created an attachment \(id=\d+/);
+            if (attachment) {
+                attachmentid = attachment[0].match(/id=\d+/)[0];
+                content = templ.content.querySelector('#comment-text').textContent;
+                uri = "https://bugzilla.gnome.org/attachment.cgi?" + attachmentid;
+                ncontent = content.replace(
+                    /Created an attachment \(id=\d+/,
+                    "Created an attachment \(<a href='" + uri + "''>" + attachmentid + "</a>"
+                  );
+                templ.content.querySelector('#comment-text').innerHTML = ncontent;
+            }
+
             var clone = document.importNode(templ.content, true);
             hcomments.appendChild(clone);
         }
