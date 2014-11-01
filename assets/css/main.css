@@ -291,6 +291,10 @@ a {
   font-weight: bold;
 }
 
+#bug-comment #comment-text .quotes {
+  color: #65379C;
+}
+
 #bug-comment.collapsed #comment-text {
   height: 0;
   opacity: 0;

@@ -406,6 +406,20 @@ App.prototype._render_bug = function(loading) {
             templ.content.querySelector('#comment-date').textContent = this._date_for_display(d);
             templ.content.querySelector('#comment-text').textContent = c.text;
 
+            /* parsing and adding color and span quotes */
+            var lines = c.text.split("\n");
+            var newtext = "";
+            lines.each(function(l){
+                if (/^>.*$/.test(l)) {
+                    newline = l.match(/^>.*$/);
+                    quoted = '<span class="quotes">' + l + '</span>';
+                    newtext = newtext + quoted + "\n";
+                } else {
+                    newtext = newtext + l + "\n";
+                }
+            });
+            templ.content.querySelector('#comment-text').innerHTML = newtext;
+
             attachment = c.text.match(/Created an attachment \(id=\d+/);
             if (attachment) {
                 attachmentid = attachment[0].match(/id=\d+/)[0];
