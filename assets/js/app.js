@@ -112,6 +112,7 @@ App.prototype._show_user = function(user) {
 
     this._user = user;
     this._show_add_comment();
+    this._show_reply_buttons();
 }
 
 App.prototype._hide_user = function() {
@@ -126,6 +127,7 @@ App.prototype._hide_user = function() {
 
     this._user = null;
     this._hide_add_comment();
+    this._hide_reply_buttons();
 }
 
 App.prototype._init_current_user = function() {
@@ -318,6 +320,30 @@ App.prototype._hide_show_add_comment = function() {
     }
 }
 
+App.prototype._hide_reply_buttons = function() {
+    /* show reply button once logged */
+    var replybtns = $$.queryAll('.bug-actions');
+    replybtns.each(function(e){
+        e.classList.remove('shown');
+    });
+}
+
+App.prototype._show_reply_buttons = function() {
+    /* show reply button once logged */
+    var replybtns = $$.queryAll('.bug-actions');
+    replybtns.each(function(e){
+        e.classList.add('shown');
+    });
+}
+
+App.prototype._hide_show_reply_buttons = function() {
+    if (this._user) {
+        this._show_reply_buttons();
+    } else {
+        this._hide_reply_buttons();
+    }
+}
+
 App.prototype._render_bug = function(loading) {
     var hbug = $$.query('#bug');
 
@@ -329,6 +355,9 @@ App.prototype._render_bug = function(loading) {
 
     var hsum = hbug.querySelector('#bug-summary');
     hsum.textContent = this._bug.summary;
+
+    var textarea = $$.query("#comment-text textarea");
+    textarea.value = '';
 
     var templ = $$.query('template#bug-comment-template');
 
@@ -433,6 +462,24 @@ App.prototype._render_bug = function(loading) {
             }
 
             var clone = document.importNode(templ.content, true);
+
+            var rbutton = clone.querySelector('#reply-comment');
+            rbutton.comment_nr = i + 1;
+            rbutton.comment_text = c.text;
+            rbutton.addEventListener('click', (function() {
+                console.log(this);
+                console.log("reply button clicked");
+                console.log("replying with text: " + this.comment_text);
+                var lines = this.comment_text.split("\n");
+                var comment = '(In reply to comment #' + this.comment_nr + ')' + "\n";
+                lines.each(function(l){
+                    comment = comment + "> " + l + "\n";
+                });
+                comment = comment + "\n";
+                $$.query("#comment-text textarea").value = comment;
+                $$.query("#comment-text textarea").focus();
+            }).bind(rbutton));
+
             hcomments.appendChild(clone);
         }
     }
@@ -459,8 +506,10 @@ App.prototype._render_bug = function(loading) {
         s.start();
 
         this._hide_add_comment();
+        this._hide_reply_buttons();
     } else {
         this._hide_show_add_comment();
+        this._hide_show_reply_buttons();
     }
 }
 
