@@ -439,6 +439,15 @@ App.prototype._render_bug = function(loading) {
             var lines = c.text.split("\n");
             var newtext = "";
             lines.each(function(l){
+                if (/Created an attachment \(id=\d+/.test(l)) {
+                    attachmentid = l.match(/id=\d+/)[0];
+                    uri = "https://bugzilla.gnome.org/attachment.cgi?" + attachmentid;
+                    l = l.replace(
+                        /Created an attachment \(id=\d+/,
+                        'Created an attachment (<a href="' + uri + '">' + attachmentid + '</a>'
+                  );
+                }
+
                 if (/^>.*$/.test(l)) {
                     newline = l.match(/^>.*$/);
                     quoted = '<span class="quotes">' + l + '</span>';
@@ -448,18 +457,6 @@ App.prototype._render_bug = function(loading) {
                 }
             });
             templ.content.querySelector('#comment-text').innerHTML = newtext;
-
-            attachment = c.text.match(/Created an attachment \(id=\d+/);
-            if (attachment) {
-                attachmentid = attachment[0].match(/id=\d+/)[0];
-                content = templ.content.querySelector('#comment-text').textContent;
-                uri = "https://bugzilla.gnome.org/attachment.cgi?" + attachmentid;
-                ncontent = content.replace(
-                    /Created an attachment \(id=\d+/,
-                    'Created an attachment (<a href="' + uri + '">' + attachmentid + '</a>'
-                  );
-                templ.content.querySelector('#comment-text').innerHTML = ncontent;
-            }
 
             var clone = document.importNode(templ.content, true);
 
