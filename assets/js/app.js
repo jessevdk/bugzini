@@ -464,9 +464,6 @@ App.prototype._render_bug = function(loading) {
             rbutton.comment_nr = i + 1;
             rbutton.comment_text = c.text;
             rbutton.addEventListener('click', (function() {
-                console.log(this);
-                console.log("reply button clicked");
-                console.log("replying with text: " + this.comment_text);
                 var lines = this.comment_text.split("\n");
                 var comment = '(In reply to comment #' + this.comment_nr + ')' + "\n";
                 lines.each(function(l){
