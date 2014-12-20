@@ -14,6 +14,10 @@ import (
 var bz *bugzilla.Conn
 
 func SaveCookies() {
+	if bz == nil || bz.Client == nil {
+		return
+	}
+
 	cookies := bz.Client.Cookies()
 	host := bz.Client.CookieHost()
 
