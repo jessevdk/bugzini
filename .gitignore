@@ -1,4 +1,5 @@
 .deps
 .cache
+.cookies
 assets.go
 bugzini
