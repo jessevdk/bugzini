@@ -17,7 +17,7 @@ var router = mux.NewRouter()
 var options struct {
 	Debug  bool `short:"d" long:"debug" description:"Enable debug mode"`
 	Launch bool `short:"l" long:"launch" description:"Launch browser at location"`
-	Port   int  `short:"p" long:"port" description:"Launch local webserver at specified port"`
+	Port   int  `short:"p" long:"port" description:"Launch local webserver at specified port" default:"8000"`
 
 	Bugzilla struct {
 		Host   string `long:"bz-host" description:"Bugzilla host (i.e. bugzilla.gnome.org)" default:"bugzilla.gnome.org"`
