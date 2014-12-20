@@ -43,6 +43,8 @@ func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go SaveCookies()
+
 	JsonResponse(w, u)
 }
 
@@ -64,6 +66,8 @@ func UserLogoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	go SaveCookies()
 
 	bz = nil
 }

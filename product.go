@@ -2,10 +2,11 @@ package main
 
 import (
 	"bugzilla"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func ProductHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +44,8 @@ func ProductHandler(w http.ResponseWriter, r *http.Request) {
 
 	cache.c.ProductMap[id] = product
 	cache.Save()
+
+	go SaveCookies()
 
 	JsonResponse(w, product)
 }
@@ -142,6 +145,7 @@ func ProductBugsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cache.Save()
+	go SaveCookies()
 
 	JsonResponse(w, pbugs)
 }
@@ -188,6 +192,7 @@ func ProductAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cache.Save()
+	go SaveCookies()
 
 	JsonResponse(w, ret)
 }
