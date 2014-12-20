@@ -2,10 +2,11 @@ package main
 
 import (
 	"bugzilla"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func BugGet(id int) (*bugzilla.Bug, error) {
@@ -26,7 +27,9 @@ func BugGet(id int) (*bugzilla.Bug, error) {
 	}
 
 	cache.c.bugsMap[bug.Id] = &bug
+
 	cache.Save()
+	go SaveCookies()
 
 	return &bug, nil
 }
@@ -51,6 +54,8 @@ func BugHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	go SaveCookies()
 
 	JsonResponse(w, *bug)
 }
@@ -109,6 +114,8 @@ func BugCommentHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	go SaveCookies()
 }
 
 func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -189,6 +196,8 @@ func BugCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cache.Save()
+	go SaveCookies()
+
 	JsonResponse(w, comments)
 }
 
