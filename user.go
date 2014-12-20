@@ -8,9 +8,16 @@ import (
 func UserCurrentHandler(w http.ResponseWriter, r *http.Request) {
 	noCache(w)
 
-	u := bugzilla.CurrentUser()
+	client, err := Bz()
 
-	if u == nil {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	u, err := client.Users().CheckCurrentLogin()
+
+	if err != nil {
 		http.Error(w, "Not logged in", http.StatusNoContent)
 		return
 	}
