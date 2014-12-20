@@ -1,5 +1,10 @@
 package bugzilla
 
+import (
+	"errors"
+	"strconv"
+)
+
 type Users struct {
 	conn *Conn
 }
@@ -23,6 +28,30 @@ func (c *Conn) Users() Users {
 
 func CurrentUser() *User {
 	return currentUser
+}
+
+func (u Users) CheckCurrentLogin() (User, error) {
+	cookies := u.conn.Client.Cookies()
+
+	for _, c := range cookies {
+		if c.Name == "Bugzilla_login" {
+			id, err := strconv.ParseInt(c.Value, 10, 64)
+
+			if err != nil {
+				return User{}, err
+			}
+
+			us, err := u.Get(int(id))
+
+			if err == nil {
+				currentUser = &us
+			}
+
+			return us, err
+		}
+	}
+
+	return User{}, errors.New("Not logged in")
 }
 
 func (u Users) Login(user string, passwd string) (User, error) {
