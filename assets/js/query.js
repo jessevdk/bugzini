@@ -1,5 +1,7 @@
 var Query = function(q) {
     this.query = q;
+    this.open_only = true;
+
     this.tree = this._parse_query(q);
 
     this._extract_products();
@@ -54,6 +56,11 @@ Query.prototype._tokenize_query = function(query) {
                         op: fieldop[k],
                         field: val.slice(0, pos),
                         value: val.slice(pos + 1, val.length)
+                    }
+
+                    if (val.field === 'status' && val.value.toLowerCase() === 'resolved')
+                    {
+                        this.open_only = false;
                     }
 
                     tp = 'f';

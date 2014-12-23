@@ -674,7 +674,7 @@ App.prototype._bugs_intersect = function(a, b) {
     }
 }
 
-App.prototype._do_query_node = function(node, cb) {
+App.prototype._do_query_node = function(node, open_only, cb) {
     if (typeof node === 'string') {
         // Simply do a filter
         var nodeci = node.toLowerCase();
@@ -697,7 +697,10 @@ App.prototype._do_query_node = function(node, cb) {
             }
 
             if (filter) {
-                this.db.bugs().index('product_open').only([filter.name, 1]).all((function (bugs) {
+                var index = open_only ? 'product_open' : 'product';
+                var filt = open_only ? [filter.name, 1] : filter.name;
+
+                this.db.bugs().index(index).only(filt).all((function (bugs) {
                     var ret = {};
 
                     bugs.each(function(b) {
@@ -716,15 +719,17 @@ App.prototype._do_query_node = function(node, cb) {
             cb(function(bug) {
                 if (bug.hasOwnProperty(cif) && bug[cif]) {
                     return bug[cif].indexOf(nodeci) != -1;
-                } else {
+                } else if (bug.hasOwnProperty(node.field) && bug[node.field]) {
                     return bug[node.field].indexOf(node.value) != -1;
                 }
+
+                return false;
             });
         }
     } else {
         if (node.left && node.right) {
-            this._do_query_node(node.left, (function(retleft) {
-                this._do_query_node(node.right, (function(retright) {
+            this._do_query_node(node.left, open_only, (function(retleft) {
+                this._do_query_node(node.right, open_only, (function(retright) {
                     if (node.type == 'either') {
                         cb(this._bugs_union(retleft, retright));
                     } else {
@@ -733,9 +738,9 @@ App.prototype._do_query_node = function(node, cb) {
                 }).bind(this));
             }).bind(this));
         } else if (node.left) {
-            this._do_query_node(node.left, cb);
+            this._do_query_node(node.left, open_only, cb);
         } else if (node.right) {
-            this._do_query_node(node.right, cb);
+            this._do_query_node(node.right, open_only, cb);
         } else {
             cb({});
         }
@@ -744,7 +749,7 @@ App.prototype._do_query_node = function(node, cb) {
 
 App.prototype._update_bugs_list_with_query = function(query) {
     // Perform actual query against database
-    this._do_query_node(query.tree, (function(ret) {
+    this._do_query_node(query.tree, query.open_only, (function(ret) {
         this._bugs = [];
 
         for (k in ret) {
