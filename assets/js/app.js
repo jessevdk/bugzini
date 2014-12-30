@@ -112,6 +112,7 @@ App.prototype._show_user = function(user) {
 
     this._user = user;
     this._show_add_comment();
+    this._show_reply_buttons();
 }
 
 App.prototype._hide_user = function() {
@@ -126,6 +127,7 @@ App.prototype._hide_user = function() {
 
     this._user = null;
     this._hide_add_comment();
+    this._hide_reply_buttons();
 }
 
 App.prototype._init_current_user = function() {
@@ -318,6 +320,30 @@ App.prototype._hide_show_add_comment = function() {
     }
 }
 
+App.prototype._hide_reply_buttons = function() {
+    /* show reply button once logged */
+    var replybtns = $$.queryAll('.bug-actions');
+    replybtns.each(function(e){
+        e.classList.remove('shown');
+    });
+}
+
+App.prototype._show_reply_buttons = function() {
+    /* show reply button once logged */
+    var replybtns = $$.queryAll('.bug-actions');
+    replybtns.each(function(e){
+        e.classList.add('shown');
+    });
+}
+
+App.prototype._hide_show_reply_buttons = function() {
+    if (this._user) {
+        this._show_reply_buttons();
+    } else {
+        this._hide_reply_buttons();
+    }
+}
+
 App.prototype._render_bug = function(loading) {
     var hbug = $$.query('#bug');
 
@@ -329,6 +355,9 @@ App.prototype._render_bug = function(loading) {
 
     var hsum = hbug.querySelector('#bug-summary');
     hsum.textContent = this._bug.summary;
+
+    var textarea = $$.query("#comment-text textarea");
+    textarea.value = '';
 
     var templ = $$.query('template#bug-comment-template');
 
@@ -406,7 +435,45 @@ App.prototype._render_bug = function(loading) {
             templ.content.querySelector('#comment-date').textContent = this._date_for_display(d);
             templ.content.querySelector('#comment-text').textContent = c.text;
 
+            /* parsing and adding color and span quotes */
+            var lines = c.text.split("\n");
+            var newtext = "";
+            lines.each(function(l){
+                if (/Created an attachment \(id=\d+/.test(l)) {
+                    attachmentid = l.match(/id=\d+/)[0];
+                    uri = "https://bugzilla.gnome.org/attachment.cgi?" + attachmentid;
+                    l = l.replace(
+                        /Created an attachment \(id=\d+/,
+                        'Created an attachment (<a href="' + uri + '">' + attachmentid + '</a>'
+                  );
+                }
+
+                if (/^>.*$/.test(l)) {
+                    newline = l.match(/^>.*$/);
+                    quoted = '<span class="quotes">' + l + '</span>';
+                    newtext = newtext + quoted + "\n";
+                } else {
+                    newtext = newtext + l + "\n";
+                }
+            });
+            templ.content.querySelector('#comment-text').innerHTML = newtext;
+
             var clone = document.importNode(templ.content, true);
+
+            var rbutton = clone.querySelector('#reply-comment');
+            rbutton.comment_nr = i + 1;
+            rbutton.comment_text = c.text;
+            rbutton.addEventListener('click', (function() {
+                var lines = this.comment_text.split("\n");
+                var comment = '(In reply to comment #' + this.comment_nr + ')' + "\n";
+                lines.each(function(l){
+                    comment = comment + "> " + l + "\n";
+                });
+                comment = comment + "\n";
+                $$.query("#comment-text textarea").value = comment;
+                $$.query("#comment-text textarea").focus();
+            }).bind(rbutton));
+
             hcomments.appendChild(clone);
         }
     }
@@ -433,8 +500,10 @@ App.prototype._render_bug = function(loading) {
         s.start();
 
         this._hide_add_comment();
+        this._hide_reply_buttons();
     } else {
         this._hide_show_add_comment();
+        this._hide_show_reply_buttons();
     }
 }
 

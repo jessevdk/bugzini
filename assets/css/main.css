@@ -189,6 +189,7 @@ col.id {
   border: 1px solid #ddd;
   padding: 6px;
   border-radius: 6px 6px 0px 0px;
+  height: 24px;
 }
 
 #comment-author {
@@ -218,6 +219,28 @@ col.id {
   white-space: pre-wrap;
   padding-top: 18px;
   padding-bottom: 18px;
+}
+
+.comments-right-header {
+  float: right;
+  width: 90%;
+  width: calc(100% - 32px);
+}
+
+.comments-author {
+  float: left;
+}
+
+#comment-reply {
+  float:right;
+}
+
+.bug-actions {
+  display: none;
+}
+
+.bug-actions.shown {
+  display: block;
 }
 
 #bug-actions {
@@ -289,6 +312,10 @@ a {
 
 #bugs_list tr.unread td {
   font-weight: bold;
+}
+
+#bug-comment #comment-text .quotes {
+  color: #65379C;
 }
 
 #bug-comment.collapsed #comment-text {
