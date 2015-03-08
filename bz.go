@@ -37,6 +37,27 @@ func SaveCookies() {
 	if err := enc.Encode(cookies); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to encode cookies: %s\n", err)
 	}
+
+	authFile := path.Join(".cookies", host+".auth")
+
+	if bugzilla.AuthUser != nil {
+		f, err = os.OpenFile(authFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to create auth: %s\n", err)
+			return
+		}
+
+		defer f.Close()
+
+		enc = gob.NewEncoder(f)
+
+		if err := enc.Encode(*bugzilla.AuthUser); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to encode auth: %s\n", err)
+		}
+	} else {
+		os.Remove(authFile)
+	}
 }
 
 func loadSavedCookies(client *xmlrpc.Client) {
@@ -60,6 +81,23 @@ func loadSavedCookies(client *xmlrpc.Client) {
 	}
 
 	client.SetCookies(cookies)
+
+	authFile := path.Join(".cookies", host+".auth")
+
+	f, err = os.Open(authFile)
+
+	if err != nil {
+		bugzilla.AuthUser = nil
+	} else {
+		dec := gob.NewDecoder(f)
+		var userAuth bugzilla.UserAuth
+
+		if err := dec.Decode(&userAuth); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to decode auth: %s\n", err)
+		} else {
+			bugzilla.AuthUser = &userAuth
+		}
+	}
 }
 
 func Bz() (*bugzilla.Conn, error) {

@@ -36,9 +36,11 @@ func (p Products) GetAll(conn *Conn, ids []int) ([]Product, error) {
 	}
 
 	args := struct {
-		Ids []int `xmlrpc:"ids" json:"ids"`
+		Ids   []int  `xmlrpc:"ids" json:"ids"`
+		Token string `xmlrpc:"token"`
 	}{
-		Ids: ids,
+		Ids:   ids,
+		Token: AuthUser.GetToken(),
 	}
 
 	var ret struct {
@@ -65,7 +67,13 @@ func (p Products) Get(conn *Conn, id int) (Product, error) {
 func (p Products) List() (*ProductList, error) {
 	var result ProductList
 
-	if err := p.conn.Call("Product.get_accessible_products", nil, &result); err != nil {
+	args := struct {
+		Token string `xmlrpc:"token"`
+	}{
+		Token: AuthUser.GetToken(),
+	}
+
+	if err := p.conn.Call("Product.get_accessible_products", args, &result); err != nil {
 		return nil, err
 	}
 
@@ -104,9 +112,11 @@ func (p *ProductList) Get(conn *Conn, i int) (Product, error) {
 		}
 
 		pids := struct {
-			Ids []int `xmlrpc:"ids" json:"ids"`
+			Ids   []int  `xmlrpc:"ids" json:"ids"`
+			Token string `xmlrpc:"token"`
 		}{
-			Ids: p.Ids[n : n+limit],
+			Ids:   p.Ids[n : n+limit],
+			Token: AuthUser.GetToken(),
 		}
 
 		if err := conn.Call("Product.get", pids, &ret); err != nil {
@@ -129,6 +139,7 @@ func (p *Product) Bugs(conn *Conn) (*BugList, error) {
 	return conn.Bugs().SearchPage(map[string]interface{}{
 		"product":    []string{p.Name},
 		"resolution": "",
+		"token":      AuthUser.GetToken(),
 	}, 300)
 }
 
@@ -140,5 +151,6 @@ func (p *Product) BugsAfter(conn *Conn, after time.Time) (*BugList, error) {
 	return conn.Bugs().SearchPage(map[string]interface{}{
 		"product":          []string{p.Name},
 		"last_change_time": after.UTC(),
+		"token":            AuthUser.GetToken(),
 	}, 300)
 }

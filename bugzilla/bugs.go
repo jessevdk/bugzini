@@ -78,9 +78,11 @@ func (b Bugs) GetAll(conn *Conn, ids []int) ([]Bug, error) {
 	}
 
 	args := struct {
-		Ids []int `xmlrpc:"ids" json:"ids"`
+		Ids   []int  `xmlrpc:"ids" json:"ids"`
+		Token string `xmlrpc:"token"`
 	}{
-		Ids: ids,
+		Ids:   ids,
+		Token: AuthUser.GetToken(),
 	}
 
 	var ret struct {
@@ -112,9 +114,11 @@ func (b Bugs) AddComment(conn *Conn, id int, comment string) (int, error) {
 	args := struct {
 		Id      int    `xmlrpc:"id"`
 		Comment string `xmlrpc:"comment"`
+		Token   string `xmlrpc:"token"`
 	}{
 		Id:      id,
 		Comment: comment,
+		Token:   AuthUser.GetToken(),
 	}
 
 	var ret struct {
@@ -130,9 +134,11 @@ func (b Bugs) AddComment(conn *Conn, id int, comment string) (int, error) {
 
 func (b Bugs) GetAllComments(conn *Conn, ids []int) ([]Comment, error) {
 	args := struct {
-		Ids []int `xmlrpc:"ids"`
+		Ids   []int  `xmlrpc:"ids"`
+		Token string `xmlrpc:"token"`
 	}{
-		Ids: ids,
+		Ids:   ids,
+		Token: AuthUser.GetToken(),
 	}
 
 	var ret struct {
@@ -168,9 +174,11 @@ func (b Bugs) GetCommentsAfter(conn *Conn, id int, after time.Time) ([]Comment, 
 	args := struct {
 		Ids      []int     `xmlrpc:"ids"`
 		NewSince time.Time `xmlrpc:"new_since"`
+		Token    string    `xmlrpc:"token"`
 	}{
 		Ids:      []int{id},
 		NewSince: after.UTC(),
+		Token:    AuthUser.GetToken(),
 	}
 
 	var ret struct {
